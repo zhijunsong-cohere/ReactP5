@@ -7,6 +7,16 @@ A template project that integrates P5.js into a React + Vite application.
 - **React 19**: Latest version of React
 - **Vite**: Fast build tool and dev server with HMR (Hot Module Replacement)
 - **P5.js**: Creative coding library for creating interactive graphics
+
+  - at `setup()` since P5 deprecate preload function, if you are using images or medias and want to preload, please use `async setup()`
+  - You can put all your sketches under `./sketches` folder
+
+  - Preload function is deprecated in the latest P5 version. Use `async` setup to preload imaegs or other medias if needed.
+
+  - To start the whole project, run `npm run dev`
+
+  - use `createCanvas(w,h, s.WEBGL)` to enable webgl
+
 - **Custom P5 React Wrapper**: A lightweight wrapper component for seamless P5.js integration with React
 
 ## Getting Started
@@ -19,12 +29,14 @@ A template project that integrates P5.js into a React + Vite application.
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/zhijunsong-cohere/ReactP5.git
 cd ReactP5
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
@@ -32,6 +44,7 @@ npm install
 ### Development
 
 Start the development server:
+
 ```bash
 npm run dev
 ```
@@ -41,6 +54,7 @@ The application will be available at `http://localhost:5173/`
 ### Build
 
 Build for production:
+
 ```bash
 npm run build
 ```
@@ -50,6 +64,7 @@ The built files will be in the `dist/` directory.
 ### Preview Production Build
 
 Preview the production build locally:
+
 ```bash
 npm run preview
 ```
@@ -93,8 +108,8 @@ export function mySketch(p5) {
 3. Import and use it in your component:
 
 ```jsx
-import { P5Sketch } from './components/P5Sketch';
-import { mySketch } from './sketches/MySketch';
+import { P5Sketch } from "./components/P5Sketch";
+import { mySketch } from "./sketches/MySketch";
 
 function MyComponent() {
   return <P5Sketch sketch={mySketch} />;
@@ -110,4 +125,3 @@ function MyComponent() {
 ## License
 
 This is a template project for educational and development purposes.
-
