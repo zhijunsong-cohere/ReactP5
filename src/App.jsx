@@ -1,17 +1,18 @@
-import { P5Sketch } from './components/P5Sketch'
-import { bouncingBallSketch } from './sketches/BouncingBall'
-import './App.css'
+import "./App.css";
 
+import PetNamesCanvas from "./components/PetNamesCanvas";
 function App() {
+  var path = document.querySelector(".path");
+
   return (
     <div className="app">
-      <h1>React + Vite + P5.js</h1>
-      <p>A bouncing ball demonstration using P5.js in React</p>
-      <div className="sketch-container">
-        <P5Sketch sketch={bouncingBallSketch} />
-      </div>
+      <section className="content-section sticky-section">
+        <div className="sticky-wrapper">
+          <PetNamesCanvas />
+        </div>
+      </section>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

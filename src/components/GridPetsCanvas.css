@@ -1,0 +1,160 @@
+.grid-pets-canvas {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  background: #f0eee9;
+  overflow: hidden;
+}
+
+.grid-footer {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 10;
+  pointer-events: none;
+  width: 100%;
+}
+
+.grid-footer h1 {
+  font-family: "CohereVariable", Arial, sans-serif;
+  font-size: 8rem;
+  color: #00ff41;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 40px rgba(0, 255, 65, 0.6);
+  font-weight: 700;
+}
+
+@media (max-width: 1200px) {
+  .grid-footer h1 {
+    font-size: 6rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .grid-footer h1 {
+    font-size: 4rem;
+  }
+}
+
+.three-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Loading state */
+.grid-pets-canvas::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at center,
+    rgba(200, 162, 208, 0.1) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  animation: pulse 4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Custom scrollbar for the container if needed */
+.grid-pets-canvas::-webkit-scrollbar {
+  width: 8px;
+}
+
+.grid-pets-canvas::-webkit-scrollbar-track {
+  background: #f0eee9;
+}
+
+.grid-pets-canvas::-webkit-scrollbar-thumb {
+  background: #c8a2d0;
+  border-radius: 4px;
+}
+
+.grid-pets-canvas::-webkit-scrollbar-thumb:hover {
+  background: #b388b8;
+}
+
+/* Pet name tooltip with handwritten/chalkboard style */
+.pet-name-tooltip {
+  position: fixed;
+  pointer-events: none;
+  z-index: 1000;
+  transform: translate(20px, -50%);
+  animation: tooltipFadeIn 0.12s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(10px, -50%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(20px, -50%) scale(1);
+  }
+}
+
+.tooltip-pointer {
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 8px solid #2a2a2a;
+}
+
+.tooltip-content {
+  background: #2a2a2a;
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-family: "Caveat", "Comic Sans MS", cursive, sans-serif;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+  position: relative;
+  transform: rotate(-2deg);
+}
+
+/* Handwritten/chalk texture effect */
+.tooltip-content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.03),
+    rgba(255, 255, 255, 0.03) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  border-radius: 12px;
+}

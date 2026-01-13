@@ -1,0 +1,222 @@
+@import "@cohere-ai/design-token-resolver/css";
+
+.pet-names-canvas {
+  width: 100vw;
+  height: 100vh;
+  background-color: #0a0a0f;
+  background-image: radial-gradient(circle, #75758a 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-position: center center;
+  cursor: grab;
+  position: relative;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pet-names-canvas:active {
+  cursor: grabbing;
+}
+
+.pet-images-grid {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.pet-image-item {
+  width: 300px;
+  height: 300px;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: none;
+  transform: translate(-50%, -50%) translateZ(0);
+  backface-visibility: hidden;
+  transition: transform 0.4s ease-in-out;
+  cursor: pointer;
+}
+
+.pet-image-item:hover {
+  z-index: 10;
+}
+
+.pet-image-item:not(.has-frame):hover {
+  animation: itemGrow 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation-fill-mode: forwards;
+  transform: translate(-50%, -50%) translateZ(0) scale(1.2);
+}
+
+.pet-image-item.has-frame:hover .pet-image-inner {
+  animation: innerGrow 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation-fill-mode: forwards;
+}
+
+.pet-image-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform;
+  backface-visibility: hidden;
+  position: relative;
+}
+
+@keyframes itemGrow {
+  0% {
+    transform: translate(-50%, -50%) translateZ(0) scale(1);
+  }
+
+  50% {
+    transform: translate(-50%, -50%) translateZ(0) scale(1.05);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) translateZ(0) scale(1.2);
+  }
+}
+
+@keyframes innerGrow {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+
+  100% {
+    transform: scale(1.2);
+  }
+}
+
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) translateZ(0) rotate(0deg);
+  }
+  10% {
+    transform: translate(-50%, -50%) translateZ(0) rotate(-10deg);
+  }
+  20% {
+    transform: translate(-50%, -50%) translateZ(0) rotate(10deg);
+  }
+  30% {
+    transform: translate(-50%, -50%) translateZ(0) rotate(-10deg);
+  }
+  40% {
+    transform: translate(-50%, -50%) translateZ(0) rotate(10deg);
+  }
+  50% {
+    transform: translate(-50%, -50%) translateZ(0) rotate(-5deg);
+  }
+  60% {
+    transform: translate(-50%, -50%) translateZ(0) rotate(5deg);
+  }
+  70% {
+    transform: translate(-50%, -50%) translateZ(0) rotate(-2deg);
+  }
+  80% {
+    transform: translate(-50%, -50%) translateZ(0) rotate(2deg);
+  }
+  90% {
+    transform: translate(-50%, -50%) translateZ(0) rotate(-1deg);
+  }
+}
+
+.pet-image-item.wiggling {
+  animation: wiggle 0.6s ease-in-out !important;
+}
+
+@keyframes spin {
+  from {
+    transform: translate(-50%, -50%) translateZ(0) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) translateZ(0) rotate(360deg);
+  }
+}
+
+.pet-image-item.spinning {
+  animation: spin 5s linear infinite forwards !important;
+}
+
+.pumpkin-particle {
+  filter: drop-shadow(0 4px 8px rgba(255, 140, 0, 0.5));
+}
+
+/* Shiny tile container styles */
+.pet-image-item.shiny-tile-container {
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.pet-image-item img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  transform: translateZ(0);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+.pet-image-base,
+.pet-image-hover {
+  position: absolute;
+  will-change: opacity;
+}
+
+/* Scrollbar styling for black background */
+.pet-names-canvas::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.pet-names-canvas::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.pet-names-canvas::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 6px;
+}
+
+.pet-names-canvas::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+/* Shiny tile container styles */
+.pet-image-item.shiny-tile-container {
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+/* Frame for 21.png using pseudo-element */
+.pet-image-item.has-frame::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 130px;
+  background-color: #8fa6f9;
+  border-radius: 12px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.pet-image-item.has-frame .pet-image-inner {
+  position: relative;
+  z-index: 1;
+}

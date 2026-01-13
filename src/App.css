@@ -1,15 +1,96 @@
+@import "@cohere-ai/design-token-resolver/css";
+
+@font-face {
+  font-family: "Unica77CohereTT-Bold";
+  src: url("./assets/Unica77CohereTT-Bold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "CohereVariable";
+  src: url("./assets/CohereVariable.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  margin: 0;
+  padding: 0;
+  font-family: "Unica77CohereTT-Bold", Arial, sans-serif;
+  overflow-x: hidden;
 }
 
 .app {
+  position: relative;
+  width: 100vw;
   display: flex;
   flex-direction: column;
+}
+
+.p5-section {
+  position: relative;
+  z-index: 1;
+  width: 100vw;
+  height: 100vh;
+  margin-top: 100vh; /* Push content down so boom effect shows first */
+}
+
+.content-sections {
+  position: relative;
+  z-index: 1;
+  background: #f0f0f0;
+}
+
+.content-section {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+  text-align: center;
+  min-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 1rem;
+}
+
+.content-section:nth-child(even) {
+  background: #e8e8e8;
+}
+
+.content-section h2 {
+  font-size: 3rem;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+.content-section p {
+  font-size: 1.5rem;
+  color: #666;
+  max-width: 600px;
+}
+
+/* Section for mouse-controlled parallax */
+.sticky-section {
+  min-height: auto;
+  padding: 0;
+  background: #f0f0f0;
+}
+
+.sticky-wrapper {
+  background: #0a0a0f;
+}
+
+.sticky-wrapper h2 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.sticky-wrapper p {
+  font-size: 1.5rem;
+  color: #666;
+  margin-bottom: 2rem;
 }
 
 .sketch-container {
@@ -23,4 +104,298 @@
   border: 2px solid #646cff;
   border-radius: 8px;
 }
+h1 {
+  font-family: "CohereVariable", Arial, sans-serif;
+  font-weight: 700;
+  font-size: 200px;
+  margin-bottom: 0.5rem;
+}
 
+h3 {
+  font-size: 1.8rem;
+}
+.copyright {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  padding: 20px;
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  z-index: 10;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.copyright .title {
+  color: white;
+  font-size: 1.8rem;
+  margin: 0;
+  z-index: 10;
+}
+
+.copyright .logo {
+  width: 100px;
+  height: auto;
+  margin: auto;
+  z-index: 10;
+}
+
+.header {
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+  color: white;
+}
+
+.sketch-container {
+  width: 100vw;
+  height: 100vh;
+  background: pink;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.chat-icon {
+  width: 400px;
+  height: 400px;
+  margin: auto;
+  margin-top: 100px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.header-icon {
+  width: 300px;
+  height: 100px;
+  margin: 20px auto;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.chat-icon:hover,
+.header-icon:hover {
+  transform: scale(1.05);
+}
+
+/* Base path styling */
+.path {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: drawPath 2s ease-in-out forwards;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+/* Sequential path animations - each path draws one after another */
+.path-1 {
+  animation-delay: 0.2s;
+}
+.path-2 {
+  animation-delay: 0.6s;
+}
+.path-3 {
+  animation-delay: 1s;
+}
+.path-4 {
+  animation-delay: 1.4s;
+}
+.path-5 {
+  animation-delay: 1.8s;
+}
+.path-6 {
+  animation-delay: 2.2s;
+}
+.path-7 {
+  animation-delay: 2.6s;
+}
+.path-8 {
+  animation-delay: 3s;
+}
+.path-9 {
+  animation-delay: 3.4s;
+}
+.path-10 {
+  animation-delay: 3.8s;
+}
+.path-11 {
+  animation-delay: 4.2s;
+}
+.path-12 {
+  animation-delay: 4.6s;
+}
+.path-13 {
+  animation-delay: 5s;
+}
+.path-14 {
+  animation-delay: 5.4s;
+}
+.path-15 {
+  animation-delay: 5.8s;
+}
+.path-16 {
+  animation-delay: 6.2s;
+}
+.path-17 {
+  animation-delay: 6.6s;
+}
+.path-18 {
+  animation-delay: 7s;
+}
+.path-19 {
+  animation-delay: 7.4s;
+}
+.path-20 {
+  animation-delay: 7.8s;
+}
+.path-21 {
+  animation-delay: 8.2s;
+}
+.path-22 {
+  animation-delay: 8.6s;
+}
+.path-23 {
+  animation-delay: 9s;
+}
+.path-24 {
+  animation-delay: 9.4s;
+}
+.path-25 {
+  animation-delay: 9.8s;
+}
+.path-26 {
+  animation-delay: 10.2s;
+}
+.path-27 {
+  animation-delay: 10.6s;
+}
+.path-28 {
+  animation-delay: 11s;
+}
+.path-29 {
+  animation-delay: 11.4s;
+}
+.path-30 {
+  animation-delay: 11.8s;
+}
+.path-31 {
+  animation-delay: 12.2s;
+}
+.path-32 {
+  animation-delay: 12.6s;
+}
+.path-33 {
+  animation-delay: 13s;
+}
+.path-34 {
+  animation-delay: 13.4s;
+}
+.path-35 {
+  animation-delay: 13.8s;
+}
+
+.chat-icon:hover svg path,
+.header-icon:hover svg path {
+  animation: pathPulse 1.5s ease-in-out infinite;
+}
+
+/* Main drawing animation */
+@keyframes drawPath {
+  0% {
+    stroke-dashoffset: 1000;
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+/* Hover pulse animation */
+@keyframes pathPulse {
+  0%,
+  100% {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 50;
+    stroke-dashoffset: 25;
+  }
+}
+
+/* Interactive Drawing Styles */
+.interactive-section {
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, #0a0f1a 0%, #1a1f2e 100%);
+  position: relative;
+}
+
+/* Grid Section Styles */
+.grid-section {
+  min-height: 100vh;
+  padding: 0;
+  background: #000000;
+  position: relative;
+}
+
+.interactive-section h2 {
+  color: #ffffff;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.interactive-section p {
+  color: #cccccc;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.interactive-drawing-container {
+  width: 100%;
+  height: 80vh;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  background: radial-gradient(ellipse at center, #1a2040 0%, #0f1426 100%);
+  position: relative;
+}
+
+.interactive-drawing {
+  cursor: crosshair;
+}
+
+.interactive-drawing:active {
+  cursor: grabbing;
+}
+
+/* Overlay instructions */
+.interactive-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+      circle at 20% 80%,
+      rgba(120, 150, 255, 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(255, 120, 150, 0.1) 0%,
+      transparent 50%
+    );
+  pointer-events: none;
+}
