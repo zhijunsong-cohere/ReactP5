@@ -372,6 +372,8 @@ export default function PetNamesCanvas() {
   const contentRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
+  const [allLoaded, setAllLoaded] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
   // Grid configuration
   const cols = 6;
@@ -426,6 +428,41 @@ export default function PetNamesCanvas() {
   // Calculate single grid dimensions for infinite scroll
   const gridWidth = cols * (imageWidth + gap);
   const gridHeight = rows * (imageHeight + gap);
+
+  // Preload all images before rendering
+  useEffect(() => {
+    const specialImages = [
+      "/pets/03-1.png",
+      "/pets/23-1.png",
+      "/pets/holographic_tile.png",
+    ];
+    const allImages = [...petImages, ...specialImages];
+
+    let loadedCount = 0;
+    const totalImages = allImages.length;
+
+    const loadImage = (src) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = src;
+        img.onload = () => {
+          loadedCount++;
+          setLoadingProgress(Math.floor((loadedCount / totalImages) * 100));
+          resolve();
+        };
+        img.onerror = () => {
+          loadedCount++;
+          setLoadingProgress(Math.floor((loadedCount / totalImages) * 100));
+          console.warn(`Failed to load image: ${src}`);
+          resolve(); // Resolve even on error to not block loading
+        };
+      });
+    };
+
+    Promise.all(allImages.map(loadImage)).then(() => {
+      setAllLoaded(true);
+    });
+  }, []);
 
   // Handle image click and spawn pumpkins
   const handleImageClick = (imageId, position) => {
@@ -672,47 +709,102 @@ export default function PetNamesCanvas() {
       onTouchMove={handlePointerMove}
       onTouchEnd={handlePointerUp}
     >
-      <div ref={contentRef} className="pet-images-grid">
-        {/* Render 7x7 grid tiles for seamless infinite scroll with extra buffer for fast movement */}
-        {[-3, -2, -1, 0, 1, 2, 3].map((tileY) =>
-          [-3, -2, -1, 0, 1, 2, 3].map((tileX) =>
-            petImages.map((image, index) => {
-              const col = index % cols;
-              const row = Math.floor(index / cols);
-              const x = col * (imageWidth + gap) + tileX * gridWidth;
-              const y = row * (imageHeight + gap) + tileY * gridHeight;
+      {/* Loading overlay with progress bar */}
+      {!allLoaded && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "#0a0a0f",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              width: "300px",
+              height: "6px",
+              backgroundColor: "rgba(255, 255, 255, 0.1)",
+              borderRadius: "3px",
+              overflow: "hidden",
+              marginBottom: "16px",
+            }}
+          >
+            <div
+              style={{
+                width: `${loadingProgress}%`,
+                height: "100%",
+                backgroundColor: "#8fa6f9",
+                transition: "width 0.2s ease-out",
+                borderRadius: "3px",
+              }}
+            />
+          </div>
+          <p
+            style={{
+              color: "#75758a",
+              fontSize: "14px",
+              fontFamily: "monospace",
+              margin: 0,
+            }}
+          >
+            Loading images... {loadingProgress}%
+          </p>
+        </div>
+      )}
 
-              return (
-                <PetImageItem
-                  key={`${tileX}-${tileY}-${index}`}
-                  image={image}
-                  x={x}
-                  y={y}
-                  imageWidth={imageWidth}
-                  imageHeight={imageHeight}
-                  index={index}
-                  gridVelocity={gridVelocity}
-                  onImageClick={handleImageClick}
-                  imageId={image.split("/").pop()}
-                />
-              );
-            })
-          )
-        )}
-      </div>
+      {/* Only render canvas content when all images are loaded */}
+      {allLoaded && (
+        <>
+          <div ref={contentRef} className="pet-images-grid">
+            {/* Render 7x7 grid tiles for seamless infinite scroll with extra buffer for fast movement */}
+            {[-3, -2, -1, 0, 1, 2, 3].map((tileY) =>
+              [-3, -2, -1, 0, 1, 2, 3].map((tileX) =>
+                petImages.map((image, index) => {
+                  const col = index % cols;
+                  const row = Math.floor(index / cols);
+                  const x = col * (imageWidth + gap) + tileX * gridWidth;
+                  const y = row * (imageHeight + gap) + tileY * gridHeight;
 
-      {/* Render spawned pumpkins */}
-      {pumpkins.map((pumpkin) => (
-        <Pumpkin
-          key={pumpkin.id}
-          id={pumpkin.id}
-          startX={pumpkin.startX}
-          startY={pumpkin.startY}
-          targetX={pumpkin.targetX}
-          targetY={pumpkin.targetY}
-          onComplete={removePumpkin}
-        />
-      ))}
+                  return (
+                    <PetImageItem
+                      key={`${tileX}-${tileY}-${index}`}
+                      image={image}
+                      x={x}
+                      y={y}
+                      imageWidth={imageWidth}
+                      imageHeight={imageHeight}
+                      index={index}
+                      gridVelocity={gridVelocity}
+                      onImageClick={handleImageClick}
+                      imageId={image.split("/").pop()}
+                    />
+                  );
+                })
+              )
+            )}
+          </div>
+
+          {/* Render spawned pumpkins */}
+          {pumpkins.map((pumpkin) => (
+            <Pumpkin
+              key={pumpkin.id}
+              id={pumpkin.id}
+              startX={pumpkin.startX}
+              startY={pumpkin.startY}
+              targetX={pumpkin.targetX}
+              targetY={pumpkin.targetY}
+              onComplete={removePumpkin}
+            />
+          ))}
+        </>
+      )}
     </div>
   );
 }
