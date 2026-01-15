@@ -96,10 +96,26 @@ function createRoundedRectShape(width, height, radius) {
 }
 
 // Pet Image Component (Fixed Grid Position) with pre-loaded texture and aspect ratio
-function PetImage({ texture, position, index, groupPosition, mousePosition }) {
+function PetImage({
+  texture,
+  position,
+  index,
+  groupPosition,
+  mousePosition,
+  imagePath,
+  animationFrames,
+}) {
   const groupRef = useRef();
   const [hovered, setHovered] = useState(false);
   const { gl, size } = useThree();
+
+  // Animation state for stop motion
+  const animationState = useRef({
+    isPlaying: false,
+    currentFrame: 0,
+    hasPlayed: false,
+  });
+  const [currentTexture, setCurrentTexture] = useState(texture);
 
   // Local mouse position on the card (0-1 normalized)
   const localMouse = useRef({ x: 0.5, y: 0.5 });
@@ -121,6 +137,63 @@ function PetImage({ texture, position, index, groupPosition, mousePosition }) {
 
   // Create hatch texture for shadow (memoized)
   const hatchTexture = useMemo(() => createHatchTexture(), []);
+
+  // Handle stop motion animation for hover
+  useEffect(() => {
+    if (!animationFrames || animationFrames.length === 0) return;
+
+    console.log(
+      "Animation component - hovered:",
+      hovered,
+      "animationFrames:",
+      animationFrames.length
+    );
+
+    if (hovered && !animationState.current.hasPlayed) {
+      console.log(
+        "Starting animation for image:",
+        imagePath,
+        "Total frames:",
+        animationFrames.length
+      );
+      // Start animation
+      animationState.current.isPlaying = true;
+      animationState.current.currentFrame = 1; // Start at frame 1 (frame 0 is already displayed)
+
+      // Set first frame immediately
+      setCurrentTexture(animationFrames[1]);
+
+      // Play through remaining frames
+      const frameInterval = setInterval(() => {
+        animationState.current.currentFrame += 1;
+        console.log(
+          "Animation frame:",
+          animationState.current.currentFrame,
+          "of",
+          animationFrames.length
+        );
+
+        if (animationState.current.currentFrame < animationFrames.length) {
+          setCurrentTexture(
+            animationFrames[animationState.current.currentFrame]
+          );
+        } else {
+          // Animation complete
+          console.log("Animation complete");
+          clearInterval(frameInterval);
+          animationState.current.isPlaying = false;
+          animationState.current.hasPlayed = true;
+        }
+      }, 100); // 100ms per frame (10fps)
+
+      return () => clearInterval(frameInterval);
+    } else if (!hovered) {
+      // Reset when hover ends
+      animationState.current.hasPlayed = false;
+      animationState.current.currentFrame = 0;
+      setCurrentTexture(texture);
+    }
+  }, [hovered, animationFrames, texture, imagePath]);
 
   // Colorful frame palette - pastel colors
   const frameColors = [
@@ -321,7 +394,7 @@ function PetImage({ texture, position, index, groupPosition, mousePosition }) {
       <mesh position={[0, 0, -0.1]}>
         <planeGeometry args={[width, height]} />
         <meshBasicMaterial
-          map={texture}
+          map={currentTexture}
           transparent={false}
           side={THREE.DoubleSide}
         />
@@ -381,7 +454,7 @@ function PetImage({ texture, position, index, groupPosition, mousePosition }) {
 }
 
 // Main Scene Component with Draggable Grid
-function Scene({ petImages }) {
+function Scene({ petImages, animationImages }) {
   const groupRef = useRef();
   const gridRef = useRef();
   const [isDragging, setIsDragging] = useState(false);
@@ -397,6 +470,9 @@ function Scene({ petImages }) {
   // Pre-load all textures to prevent flashing
   const textures = useLoader(THREE.TextureLoader, petImages);
 
+  // Load animation frames for pet 17
+  const animationTextures = useLoader(THREE.TextureLoader, animationImages);
+
   // Create sparse 8x5 grid with randomly placed images
   const gridData = useMemo(() => {
     const cols = 8;
@@ -404,6 +480,7 @@ function Scene({ petImages }) {
     const spacing = 50; // Larger spacing to prevent overlap with 20-unit wide images
     const grid = [];
     const appearanceProbability = 0.5; // 50% chance for each image to appear
+    let hasAnimatedImage = false;
 
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
@@ -411,10 +488,23 @@ function Scene({ petImages }) {
         if (Math.random() > appearanceProbability) continue;
 
         const index = row * cols + col;
-        const textureIndex = index % petImages.length; // Cycle through 15 images
+        const textureIndex = index % petImages.length; // Cycle through all images
+        const imagePath = petImages[textureIndex];
 
         // Small random z-position for subtle depth without overlap
         const randomZ = (Math.random() - 0.5) * 2;
+
+        // Check if this is the image that should have animation (pets/17.png)
+        const hasAnimation = imagePath.includes("pets/17.png");
+        if (hasAnimation) {
+          hasAnimatedImage = true;
+          console.log(
+            "Found animated image at index:",
+            index,
+            "path:",
+            imagePath
+          );
+        }
 
         grid.push({
           position: [
@@ -424,12 +514,35 @@ function Scene({ petImages }) {
           ],
           texture: textures[textureIndex],
           index: index,
+          imagePath: imagePath,
+          animationFrames: hasAnimation ? animationTextures : null,
         });
       }
     }
 
+    // Ensure at least one animated image appears in the grid
+    if (!hasAnimatedImage && grid.length > 0) {
+      console.log("Adding animated image to ensure it appears");
+      const animatedTextureIndex = petImages.findIndex((path) =>
+        path.includes("pets/17.png")
+      );
+      grid.push({
+        position: [0, 0, 0], // Center position
+        texture: textures[animatedTextureIndex],
+        index: 999,
+        imagePath: petImages[animatedTextureIndex],
+        animationFrames: animationTextures,
+      });
+    }
+
+    console.log(
+      "Grid created with",
+      grid.length,
+      "images. Animation textures loaded:",
+      animationTextures.length
+    );
     return grid;
-  }, [textures, petImages.length]);
+  }, [textures, petImages.length, animationTextures, petImages]);
 
   const handlePointerDown = (e) => {
     setIsDragging(true);
@@ -566,6 +679,8 @@ function Scene({ petImages }) {
               0,
             ]}
             mousePosition={mousePosition.current}
+            imagePath={item.imagePath}
+            animationFrames={item.animationFrames}
           />
         ))}
       </group>
@@ -591,6 +706,16 @@ export default function GridPetsCanvas() {
     "/pet13.png",
     "/pet14.png",
     "/pet15.png",
+    "/pets/17.png", // Add the image with animation
+  ];
+
+  // Animation frames for pets/17.png stop motion
+  const animationImages = [
+    "/pets/17.png",
+    "/pets/17-1.png",
+    "/pets/17-2.png",
+    "/pets/17-3.png",
+    "/pets/17-4.png",
   ];
 
   // Pet names for hover display
@@ -602,7 +727,7 @@ export default function GridPetsCanvas() {
         style={{ background: "#F0EEE9", cursor: "grab" }}
       >
         <Suspense fallback={null}>
-          <Scene petImages={petImages} />
+          <Scene petImages={petImages} animationImages={animationImages} />
         </Suspense>
       </Canvas>
     </div>
