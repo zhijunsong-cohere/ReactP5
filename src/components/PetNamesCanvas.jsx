@@ -13,13 +13,15 @@ function PetImageItem({
   gridVelocity,
   onImageClick,
   imageId,
+  showEntrance,
 }) {
   const imageRef = useRef(null);
   const itemRef = useRef(null);
-  const [isWiggling, setIsWiggling] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isWiggling, setIsWiggling] = useState(false);
   const [tileOffset, setTileOffset] = useState({ x: 0, y: 0 });
   const lastClickTime = useRef(0); // Add debounce for clicks
+  const wiggleTimerRef = useRef(null); // Store wiggle timer for cleanup
   const physics = useRef({
     offsetX: 0,
     offsetY: 0,
@@ -37,6 +39,9 @@ function PetImageItem({
   const [tiltTransform, setTiltTransform] = useState("");
   const tiltRef = useRef({ x: 0, y: 0 }); // Store target tilt values
   const [imageOpacity, setImageOpacity] = useState(1); // Opacity for smooth transitions
+
+  // Check if this image should scale up on hover (01.png)
+  const shouldScaleUp = imageId === "01.png";
 
   // Check if this image should spin on hover
   const shouldSpin = imageId === "02.png";
@@ -57,6 +62,9 @@ function PetImageItem({
   const shouldPlaySound = imageId === "01.png";
   const audioRef = useRef(null);
 
+  // Check if this image should wiggle and spawn pumpkins on click (23.png)
+  const shouldWiggleAndSpawn = imageId === "23.png";
+
   // Stop motion animation state
   const [currentAnimFrame, setCurrentAnimFrame] = useState(0);
   const animationFrames = shouldPlayStopMotion
@@ -70,18 +78,6 @@ function PetImageItem({
     : [];
   const hasPlayedAnimation = useRef(false);
   const animationInterval = useRef(null); // Store interval ID to prevent cleanup issues
-
-  // Wiggle effect removed from hover
-  const shouldWiggleOnHover = useRef(Math.random() < 0.2);
-
-  // Wiggle when hovering over randomly selected images - DISABLED
-  useEffect(() => {
-    if (isHovered && shouldWiggleOnHover.current) {
-      setIsWiggling(true);
-      const timer = setTimeout(() => setIsWiggling(false), 600);
-      return () => clearTimeout(timer);
-    }
-  }, [isHovered]);
 
   // Initialize audio for 01.png
   useEffect(() => {
@@ -199,14 +195,46 @@ function PetImageItem({
     e.stopPropagation();
     e.preventDefault(); // Prevent any default behavior
 
-    // Debounce: prevent multiple rapid clicks (minimum 300ms between clicks)
+    // Debounce: prevent multiple rapid clicks
     const now = Date.now();
-    if (now - lastClickTime.current < 500) {
+    const timeSinceLastClick = now - lastClickTime.current;
+
+    // For 23.png (pumpkins), use longer debounce (2000ms)
+    // For other images, use shorter debounce (500ms)
+    const debounceTime = shouldWiggleAndSpawn ? 2000 : 500;
+
+    if (timeSinceLastClick < debounceTime) {
+      console.log(
+        `Click debounced for ${imageId} - too soon (${timeSinceLastClick}ms)`
+      );
       return;
     }
     lastClickTime.current = now;
 
-    onImageClick(imageId, { x: x, y: y });
+    // If this is 23.png, wiggle first then spawn pumpkins
+    if (shouldWiggleAndSpawn) {
+      console.log("🔄 Starting wiggle animation for 23.png");
+
+      // Clear any existing wiggle timer
+      if (wiggleTimerRef.current) {
+        console.log("⚠️ Clearing existing wiggle timer");
+        clearTimeout(wiggleTimerRef.current);
+        wiggleTimerRef.current = null;
+      }
+
+      setIsWiggling(true);
+
+      // After wiggle completes (600ms), stop wiggling and spawn pumpkins
+      wiggleTimerRef.current = setTimeout(() => {
+        console.log("🔄 Wiggle complete - calling spawn handler");
+        setIsWiggling(false);
+        onImageClick(imageId, { x: x, y: y });
+        wiggleTimerRef.current = null;
+      }, 600);
+    } else {
+      // For other images, just trigger the click handler immediately
+      onImageClick(imageId, { x: x, y: y });
+    }
   };
 
   const handleMouseMove = (e) => {
@@ -386,14 +414,25 @@ function PetImageItem({
     };
   }, [gridVelocity]);
 
+  // Cleanup wiggle timer on unmount
+  useEffect(() => {
+    return () => {
+      if (wiggleTimerRef.current) {
+        clearTimeout(wiggleTimerRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div
       ref={itemRef}
       className={`pet-image-item ${isWiggling ? "wiggling" : ""} ${
         shouldSpin && isHovered ? "spinning" : ""
       } ${shouldFlip && isHovered ? "flipping" : ""} ${
-        shouldShinyTile ? "shiny-tile-container" : ""
-      } ${shouldHaveFrame ? "has-frame" : ""}`}
+        shouldScaleUp && isHovered ? "scale-up" : ""
+      } ${shouldShinyTile ? "shiny-tile-container" : ""} ${
+        shouldHaveFrame ? "has-frame" : ""
+      } ${showEntrance ? "entrance-animation" : ""}`}
       style={{
         left: `${x}px`,
         top: `${y}px`,
@@ -523,7 +562,7 @@ function PetImageItem({
 }
 
 // Pumpkin particle component
-function Pumpkin({ id, startX, startY, targetX, targetY, onComplete }) {
+function Pumpkin({ id, startX, startY, targetX, targetY, peakY, onComplete }) {
   const pumpkinRef = useRef(null);
 
   useEffect(() => {
@@ -533,38 +572,86 @@ function Pumpkin({ id, startX, startY, targetX, targetY, onComplete }) {
       onComplete: () => onComplete(id),
     });
 
-    // Animate position, scale, and rotation
-    tl.fromTo(
+    const duration = 1.8 + Math.random() * 0.4;
+
+    // Set initial state
+    gsap.set(pumpkinRef.current, {
+      x: startX,
+      y: startY,
+      scale: 0.2,
+      rotation: 0,
+      opacity: 1,
+    });
+
+    // Animate horizontal movement (constant velocity)
+    tl.to(
       pumpkinRef.current,
       {
-        x: startX,
-        y: startY,
-        scale: 0,
-        rotation: 0,
-        opacity: 1,
-      },
-      {
         x: targetX,
-        y: targetY,
-        scale: 1,
-        rotation: Math.random() * 720 - 360,
-        duration: 1.5 + Math.random() * 0.5,
-        ease: "power1.out",
+        duration: duration,
+        ease: "none", // Linear movement
       },
       0
     );
 
-    // Fade out slowly in the last portion
+    // Animate vertical movement (parabolic arc - throw up and fall down)
+    tl.to(
+      pumpkinRef.current,
+      {
+        y: peakY,
+        duration: duration * 0.4, // 40% of time going up
+        ease: "power2.out", // Decelerate as it goes up
+      },
+      0
+    );
+
+    tl.to(
+      pumpkinRef.current,
+      {
+        y: targetY,
+        duration: duration * 0.6, // 60% of time falling down
+        ease: "power2.in", // Accelerate as it falls (gravity)
+      },
+      duration * 0.4 // Start after upward motion
+    );
+
+    // Scale up as it launches
+    tl.to(
+      pumpkinRef.current,
+      {
+        scale: 1,
+        duration: 0.3,
+        ease: "back.out(2)",
+      },
+      0
+    );
+
+    // Rotation throughout the motion
+    tl.to(
+      pumpkinRef.current,
+      {
+        rotation: Math.random() * 720 - 360,
+        duration: duration,
+        ease: "none",
+      },
+      0
+    );
+
+    // Fade out at the end
     tl.to(
       pumpkinRef.current,
       {
         opacity: 0,
-        duration: 0.8,
+        duration: 0.4,
         ease: "power2.in",
       },
-      0.8 // Start fading after 0.8s
+      duration - 0.4 // Start fading near the end
     );
-  }, [startX, startY, targetX, targetY, id, onComplete]);
+
+    return () => {
+      tl.kill();
+    };
+  }, [startX, startY, targetX, targetY, peakY, id, onComplete]);
 
   return (
     <div
@@ -596,7 +683,10 @@ function MapleLeaf({ id, x, y, onComplete }) {
     if (!leafRef.current) return;
 
     const tl = gsap.timeline({
-      onComplete: () => onComplete(id),
+      onComplete: () => {
+        console.log(`Maple leaf ${id} animation complete - removing`);
+        onComplete(id);
+      },
     });
 
     // Fade in
@@ -622,7 +712,14 @@ function MapleLeaf({ id, x, y, onComplete }) {
       },
       "+=2.55" // Wait 2.55 seconds after fade in completes (total visible time: ~2.8s)
     );
-  }, [x, y, id, onComplete]);
+
+    return () => {
+      // Cleanup timeline on unmount only
+      if (tl) {
+        tl.kill();
+      }
+    };
+  }, []); // Empty dependency array - run only once on mount
 
   return (
     <div
@@ -630,12 +727,12 @@ function MapleLeaf({ id, x, y, onComplete }) {
       className="maple-leaf-stamp"
       style={{
         position: "fixed",
-        width: "40px",
-        height: "40px",
+        width: "80px",
+        height: "80px",
         pointerEvents: "none",
         zIndex: 1000,
-        left: `${x - 20}px`, // Center the leaf
-        top: `${y - 20}px`,
+        left: `${x - 40}px`, // Center the leaf
+        top: `${y - 40}px`,
         transform: `rotate(${initialRotation.current}deg)`, // Fixed initial rotation
       }}
     >
@@ -655,6 +752,7 @@ export default function PetNamesCanvas() {
   const dragStart = useRef({ x: 0, y: 0 });
   const [allLoaded, setAllLoaded] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [showEntrance, setShowEntrance] = useState(false); // Trigger entrance animation
 
   // Grid configuration
   const cols = 6;
@@ -675,7 +773,7 @@ export default function PetNamesCanvas() {
   const lastWrapTime = useRef(0); // Track last wrap to prevent rapid wrapping
   const gridVelocity = useRef({ x: 0, y: 0 }); // Track grid velocity for image momentum
   const [pumpkins, setPumpkins] = useState([]);
-  const lastPumpkinSpawnTime = useRef(0); // Track last pumpkin spawn to prevent duplicates
+  const isPumpkinSpawning = useRef(false); // Global flag to prevent multiple spawns across all 23.png instances
 
   // Maple leaf stamp mode state
   const [isStampMode, setIsStampMode] = useState(false);
@@ -753,12 +851,26 @@ export default function PetNamesCanvas() {
 
     Promise.all(allImages.map(loadImage)).then(() => {
       setAllLoaded(true);
+      // Trigger entrance animation after a brief delay
+      setTimeout(() => {
+        setShowEntrance(true);
+      }, 100);
     });
   }, []);
 
-  // Handle image click and spawn pumpkins or enable stamp mode
+  // Reset entrance animation after it completes
+  useEffect(() => {
+    if (showEntrance) {
+      const timer = setTimeout(() => {
+        setShowEntrance(false);
+      }, 800); // Match animation duration
+      return () => clearTimeout(timer);
+    }
+  }, [showEntrance]);
+
+  // Handle image hover/click for special features
   const handleImageClick = (imageId, position) => {
-    // Enable maple leaf stamp mode for 05.png
+    // Enable maple leaf stamp mode for 05.png (click only)
     if (imageId === "05.png") {
       console.log("Enabling maple leaf stamp mode for 8 seconds");
       setIsStampMode(true);
@@ -777,47 +889,67 @@ export default function PetNamesCanvas() {
       return;
     }
 
-    // Only spawn pumpkins for 23.png
-    if (imageId !== "23.png") return;
+    // Spawn pumpkins for 23.png (triggered by click)
+    if (imageId === "23.png") {
+      // Check global flag to prevent multiple spawns from different 23.png instances
+      if (isPumpkinSpawning.current) {
+        console.log("❌ Pumpkin spawn already in progress (global) - ignoring");
+        return;
+      }
 
-    // Debounce: prevent multiple rapid spawns (minimum 500ms between spawns)
-    const now = Date.now();
-    if (now - lastPumpkinSpawnTime.current < 500) {
-      console.log("Pumpkin spawn debounced - too soon after last spawn");
-      return;
+      console.log("✅ Spawning pumpkin burst!");
+      isPumpkinSpawning.current = true; // Set global flag
+
+      const now = Date.now();
+      const batchId = `batch-${now}`;
+
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const centerX =
+        containerRect.width / 2 + position.x + currentPosition.current.x;
+      const centerY =
+        containerRect.height / 2 + position.y + currentPosition.current.y;
+
+      // Spawn 12 pumpkins throwing upward and falling
+      const newPumpkins = [];
+      const pumpkinCount = 12;
+
+      for (let i = 0; i < pumpkinCount; i++) {
+        // Random horizontal direction and distance
+        const horizontalDirection = (Math.random() - 0.5) * 2; // -1 to 1
+        const horizontalDistance = 150 + Math.random() * 250;
+        const targetX = centerX + horizontalDirection * horizontalDistance;
+
+        // Target Y is below the start (falling down)
+        const fallDistance = 400 + Math.random() * 200;
+        const targetY = centerY + fallDistance;
+
+        // Peak height (how high the pumpkin goes before falling)
+        const peakHeight = -200 - Math.random() * 150; // Negative = upward
+
+        newPumpkins.push({
+          id: `${batchId}-${i}`,
+          startX: centerX,
+          startY: centerY,
+          targetX,
+          targetY,
+          peakY: centerY + peakHeight, // Peak of the arc
+        });
+      }
+
+      console.log(`🎃 Adding ${newPumpkins.length} pumpkins to state`);
+      setPumpkins((prev) => [...prev, ...newPumpkins]);
+
+      // Reset global flag after spawn completes (allow next spawn after 2s debounce)
+      setTimeout(() => {
+        isPumpkinSpawning.current = false;
+        console.log("✅ Global spawn flag reset - ready for next spawn");
+      }, 100);
     }
-    lastPumpkinSpawnTime.current = now;
-
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const centerX =
-      containerRect.width / 2 + position.x + currentPosition.current.x;
-    const centerY =
-      containerRect.height / 2 + position.y + currentPosition.current.y;
-
-    // Spawn 12 pumpkins from corners spreading outward
-    const newPumpkins = [];
-    const pumpkinCount = 12;
-
-    for (let i = 0; i < pumpkinCount; i++) {
-      const angle = (Math.PI * 2 * i) / pumpkinCount;
-      const distance = 250 + Math.random() * 200; // Increased distance for slower animation
-      const targetX = centerX + Math.cos(angle) * distance;
-      const targetY = centerY + Math.sin(angle) * distance;
-
-      newPumpkins.push({
-        id: `${Date.now()}-${i}-${Math.random()}`, // More unique ID
-        startX: centerX,
-        startY: centerY,
-        targetX,
-        targetY,
-      });
-    }
-
-    setPumpkins((prev) => [...prev, ...newPumpkins]);
   };
 
   // Remove completed pumpkins
   const removePumpkin = (id) => {
+    console.log(`🎃 Pumpkin ${id} completed animation`);
     setPumpkins((prev) => prev.filter((p) => p.id !== id));
   };
 
@@ -1044,12 +1176,13 @@ export default function PetNamesCanvas() {
     };
   }, []);
 
-  // Cleanup stamp mode timer on unmount
+  // Cleanup stamp mode timer and pumpkin spawn flag on unmount
   useEffect(() => {
     return () => {
       if (stampModeTimer.current) {
         clearTimeout(stampModeTimer.current);
       }
+      isPumpkinSpawning.current = false; // Reset global flag
     };
   }, []);
 
@@ -1141,6 +1274,7 @@ export default function PetNamesCanvas() {
                       gridVelocity={gridVelocity}
                       onImageClick={handleImageClick}
                       imageId={image.split("/").pop()}
+                      showEntrance={showEntrance}
                     />
                   );
                 })
@@ -1157,6 +1291,7 @@ export default function PetNamesCanvas() {
               startY={pumpkin.startY}
               targetX={pumpkin.targetX}
               targetY={pumpkin.targetY}
+              peakY={pumpkin.peakY}
               onComplete={removePumpkin}
             />
           ))}
