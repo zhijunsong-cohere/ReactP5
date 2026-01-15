@@ -199,23 +199,3 @@
   overflow: hidden;
   border-radius: 12px;
 }
-
-/* Frame for 21.png using pseudo-element */
-.pet-image-item.has-frame::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 200px;
-  height: 130px;
-  background-color: #8fa6f9;
-  border-radius: 12px;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.pet-image-item.has-frame .pet-image-inner {
-  position: relative;
-  z-index: 1;
-}
