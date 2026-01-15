@@ -459,7 +459,7 @@ function PetImageItem({
                   backgroundSize: "200px 200px",
                   backgroundRepeat: "repeat",
                   backgroundPosition: `${tileOffset.x}px ${tileOffset.y}px`,
-                  transform: "rotate(-45deg)",
+                  transform: "rotate(45deg)",
                   pointerEvents: "none",
                 }}
               />
