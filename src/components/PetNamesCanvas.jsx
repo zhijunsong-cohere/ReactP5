@@ -14,6 +14,7 @@ function PetImageItem({
   onImageClick,
   imageId,
   showEntrance,
+  reducedMotion,
 }) {
   const imageRef = useRef(null);
   const itemRef = useRef(null);
@@ -64,6 +65,22 @@ function PetImageItem({
 
   // Check if this image should wiggle and spawn pumpkins on click (23.png)
   const shouldWiggleAndSpawn = imageId === "23.png";
+
+  // Get descriptive name for accessibility
+  const getImageDescription = () => {
+    const descriptions = {
+      "01.png": "Cat with purr sound effect - Click to hear",
+      "02.png": "Spinning pet",
+      "03.png": "3D tilting card - Hover to interact",
+      "05.png": "Canadian maple leaf - Click to activate stamp mode",
+      "07.png": "Daisy flower - Click to activate stamp mode",
+      "17.png": "Fortune cookie - Hover to see animation",
+      "19.svg": "Cohere logo with holographic effect",
+      "23.png": "Pumpkin - Click to spawn flying pumpkins",
+      "24.png": "Flipping image",
+    };
+    return descriptions[imageId] || `Interactive pet image ${index + 1}`;
+  };
 
   // Stop motion animation state
   const [currentAnimFrame, setCurrentAnimFrame] = useState(0);
@@ -233,6 +250,14 @@ function PetImageItem({
     } else {
       // For other images, just trigger the click handler immediately
       onImageClick(imageId, { x: x, y: y });
+    }
+  };
+
+  // Keyboard handler for accessibility
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleClick(e);
     }
   };
 
@@ -431,7 +456,7 @@ function PetImageItem({
         shouldScaleUp && isHovered ? "scale-up" : ""
       } ${shouldShinyTile ? "shiny-tile-container" : ""} ${
         shouldHaveFrame ? "has-frame" : ""
-      } ${showEntrance ? "entrance-animation" : ""}`}
+      } ${showEntrance && !reducedMotion ? "entrance-animation" : ""}`}
       style={{
         left: `${x}px`,
         top: `${y}px`,
@@ -440,12 +465,17 @@ function PetImageItem({
         cursor: "pointer",
       }}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
         setIsHovered(false);
         tiltRef.current = { x: 0, y: 0 };
       }}
       onMouseMove={handleMouseMove}
+      role="button"
+      tabIndex={0}
+      aria-label={getImageDescription()}
+      aria-pressed={isHovered}
     >
       <div
         ref={imageRef}
@@ -515,7 +545,7 @@ function PetImageItem({
                 position: "relative",
                 zIndex: 2,
                 opacity: 0.2,
-                mixBlendMode: "multiply",
+                mixBlendMode:"soft-light",
                 pointerEvents: "none",
               }}
             />
@@ -756,6 +786,19 @@ export default function PetNamesCanvas() {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showEntrance, setShowEntrance] = useState(false); // Trigger entrance animation
 
+  // Check for reduced motion preference
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mediaQuery.matches);
+
+    const handleChange = (e) => setReducedMotion(e.matches);
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
   // Grid configuration
   const cols = 6;
   const gap = 140;
@@ -789,6 +832,9 @@ export default function PetNamesCanvas() {
 
   // Custom cursor position for stamp modes
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+
+  // Announcement for screen readers
+  const [announcement, setAnnouncement] = useState("");
 
   // All pet images from the pets folder
   const petImages = [
@@ -885,6 +931,7 @@ export default function PetNamesCanvas() {
     if (imageId === "05.png") {
       console.log("🍁 Enabling maple leaf stamp mode for 8 seconds");
       setIsStampMode(true);
+      setAnnouncement("Maple leaf stamp mode activated. Click anywhere to place maple leaves.");
 
       // Clear any existing timer
       if (stampModeTimer.current) {
@@ -894,6 +941,7 @@ export default function PetNamesCanvas() {
       // Disable stamp mode after 8 seconds
       stampModeTimer.current = setTimeout(() => {
         setIsStampMode(false);
+        setAnnouncement("Maple leaf stamp mode deactivated.");
         console.log("🍁 Maple leaf stamp mode disabled");
       }, 8000); // 8 seconds
 
@@ -904,6 +952,7 @@ export default function PetNamesCanvas() {
     if (imageId === "07.png") {
       console.log("🌼 Enabling daisy stamp mode for 8 seconds");
       setIsDaisyStampMode(true);
+      setAnnouncement("Daisy stamp mode activated. Click anywhere to place daisies.");
 
       // Clear any existing timer
       if (daisyStampModeTimer.current) {
@@ -913,6 +962,7 @@ export default function PetNamesCanvas() {
       // Disable daisy stamp mode after 8 seconds
       daisyStampModeTimer.current = setTimeout(() => {
         setIsDaisyStampMode(false);
+        setAnnouncement("Daisy stamp mode deactivated.");
         console.log("🌼 Daisy stamp mode disabled");
       }, 8000); // 8 seconds
 
@@ -1269,7 +1319,26 @@ export default function PetNamesCanvas() {
       onTouchStart={handlePointerDown}
       onTouchMove={handlePointerMove}
       onTouchEnd={handlePointerUp}
+      role="application"
+      aria-label="Interactive pet images canvas - Drag to navigate, click on images to interact"
+      aria-busy={!allLoaded}
     >
+      {/* Screen reader announcements */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        style={{
+          position: "absolute",
+          left: "-10000px",
+          width: "1px",
+          height: "1px",
+          overflow: "hidden",
+        }}
+      >
+        {announcement}
+      </div>
+
       {/* Loading overlay with progress bar */}
       {!allLoaded && (
         <div
@@ -1286,6 +1355,9 @@ export default function PetNamesCanvas() {
             justifyContent: "center",
             zIndex: 9999,
           }}
+          role="status"
+          aria-live="polite"
+          aria-label={`Loading images: ${loadingProgress}% complete`}
         >
           <div
             style={{
@@ -1296,6 +1368,10 @@ export default function PetNamesCanvas() {
               overflow: "hidden",
               marginBottom: "16px",
             }}
+            role="progressbar"
+            aria-valuenow={loadingProgress}
+            aria-valuemin={0}
+            aria-valuemax={100}
           >
             <div
               style={{
@@ -1314,6 +1390,7 @@ export default function PetNamesCanvas() {
               fontFamily: "monospace",
               margin: 0,
             }}
+            aria-hidden="true"
           >
             Loading images... {loadingProgress}%
           </p>
@@ -1346,6 +1423,7 @@ export default function PetNamesCanvas() {
                       onImageClick={handleImageClick}
                       imageId={image.split("/").pop()}
                       showEntrance={showEntrance}
+                      reducedMotion={reducedMotion}
                     />
                   );
                 })
@@ -1409,10 +1487,11 @@ export default function PetNamesCanvas() {
                 transform: "translate(-50%, -50%)",
                 opacity: 0.7,
               }}
+              aria-hidden="true"
             >
               <img
                 src={isStampMode ? "/pets/mapleleaf.png" : "/pets/daisy.png"}
-                alt="stamp cursor"
+                alt=""
                 style={{
                   width: "100%",
                   height: "100%",
