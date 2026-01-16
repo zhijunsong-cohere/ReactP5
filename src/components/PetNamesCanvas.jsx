@@ -76,7 +76,6 @@ function PetImageItem({
         image.replace("17.png", "17-4.png"),
       ]
     : [];
-  const hasPlayedAnimation = useRef(false);
   const animationInterval = useRef(null); // Store interval ID to prevent cleanup issues
 
   // Initialize audio for 01.png
@@ -153,11 +152,11 @@ function PetImageItem({
     };
   }, [isHovered, shouldPlaySound]);
 
-  // Stop motion animation on hover for 17.png
+  // Stop motion animation on hover for 17.png - plays once and stops at last frame
   useEffect(() => {
     if (!shouldPlayStopMotion) return;
 
-    if (isHovered && !hasPlayedAnimation.current) {
+    if (isHovered) {
       console.log("Starting stop motion animation for 17.png");
       let frameIndex = 0;
 
@@ -165,14 +164,15 @@ function PetImageItem({
       animationInterval.current = setInterval(() => {
         frameIndex++;
 
-        if (frameIndex < animationFrames.length) {
-          setCurrentAnimFrame(frameIndex);
-        } else {
+        // Stop at the last frame
+        if (frameIndex >= animationFrames.length) {
           clearInterval(animationInterval.current);
           animationInterval.current = null;
-          hasPlayedAnimation.current = true;
+          console.log("Animation complete - stopped at last frame");
+        } else {
+          setCurrentAnimFrame(frameIndex);
         }
-      }, 100); // 100ms per frame (10fps)
+      }, 120); // 120ms per frame (~8.3fps) for smoother visibility of each frame
 
       return () => {
         if (animationInterval.current) {
@@ -180,13 +180,12 @@ function PetImageItem({
           animationInterval.current = null;
         }
       };
-    } else if (!isHovered) {
+    } else {
       // Reset when not hovering
       if (animationInterval.current) {
         clearInterval(animationInterval.current);
         animationInterval.current = null;
       }
-      hasPlayedAnimation.current = false;
       setCurrentAnimFrame(0);
     }
   }, [isHovered, shouldPlayStopMotion, animationFrames.length]);
