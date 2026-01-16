@@ -437,6 +437,7 @@ function PetImageItem({
         top: `${y}px`,
         width: `${imageWidth}px`,
         height: `${imageHeight}px`,
+        cursor: "pointer",
       }}
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
@@ -673,24 +674,24 @@ function Pumpkin({ id, startX, startY, targetX, targetY, peakY, onComplete }) {
   );
 }
 
-// Maple leaf stamp component
-function MapleLeaf({ id, x, y, onComplete }) {
-  const leafRef = useRef(null);
+// Generic stamp component for images (maple leaf, daisy, etc.)
+function Stamp({ id, x, y, imageSrc, imageAlt, size = 80, onComplete }) {
+  const stampRef = useRef(null);
   const initialRotation = useRef(Math.random() * 360); // Random initial rotation
 
   useEffect(() => {
-    if (!leafRef.current) return;
+    if (!stampRef.current) return;
 
     const tl = gsap.timeline({
       onComplete: () => {
-        console.log(`Maple leaf ${id} animation complete - removing`);
+        console.log(`${imageAlt} stamp ${id} animation complete - removing`);
         onComplete(id);
       },
     });
 
     // Fade in
     tl.fromTo(
-      leafRef.current,
+      stampRef.current,
       {
         opacity: 0,
       },
@@ -701,9 +702,9 @@ function MapleLeaf({ id, x, y, onComplete }) {
       }
     );
 
-    // Simple fade out after staying visible (no middle animation needed)
+    // Simple fade out after staying visible
     tl.to(
-      leafRef.current,
+      stampRef.current,
       {
         opacity: 0,
         duration: 0.5,
@@ -720,24 +721,26 @@ function MapleLeaf({ id, x, y, onComplete }) {
     };
   }, []); // Empty dependency array - run only once on mount
 
+  const halfSize = size / 2;
+
   return (
     <div
-      ref={leafRef}
-      className="maple-leaf-stamp"
+      ref={stampRef}
+      className="stamp"
       style={{
         position: "fixed",
-        width: "80px",
-        height: "80px",
+        width: `${size}px`,
+        height: `${size}px`,
         pointerEvents: "none",
         zIndex: 1000,
-        left: `${x - 40}px`, // Center the leaf
-        top: `${y - 40}px`,
+        left: `${x - halfSize}px`, // Center the stamp
+        top: `${y - halfSize}px`,
         transform: `rotate(${initialRotation.current}deg)`, // Fixed initial rotation
       }}
     >
       <img
-        src="/pets/mapleleaf.png"
-        alt="maple leaf"
+        src={imageSrc}
+        alt={imageAlt}
         style={{ width: "100%", height: "100%", objectFit: "contain" }}
       />
     </div>
@@ -778,6 +781,14 @@ export default function PetNamesCanvas() {
   const [isStampMode, setIsStampMode] = useState(false);
   const [mapleLeaves, setMapleLeaves] = useState([]);
   const stampModeTimer = useRef(null);
+
+  // Daisy stamp mode state
+  const [isDaisyStampMode, setIsDaisyStampMode] = useState(false);
+  const [daisies, setDaisies] = useState([]);
+  const daisyStampModeTimer = useRef(null);
+
+  // Custom cursor position for stamp modes
+  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
 
   // All pet images from the pets folder
   const petImages = [
@@ -824,6 +835,7 @@ export default function PetNamesCanvas() {
       "/pets/17-3.png",
       "/pets/17-4.png",
       "/pets/mapleleaf.png",
+      "/pets/daisy.png",
     ];
     const allImages = [...petImages, ...specialImages];
 
@@ -871,7 +883,7 @@ export default function PetNamesCanvas() {
   const handleImageClick = (imageId, position) => {
     // Enable maple leaf stamp mode for 05.png (click only)
     if (imageId === "05.png") {
-      console.log("Enabling maple leaf stamp mode for 8 seconds");
+      console.log("🍁 Enabling maple leaf stamp mode for 8 seconds");
       setIsStampMode(true);
 
       // Clear any existing timer
@@ -882,7 +894,26 @@ export default function PetNamesCanvas() {
       // Disable stamp mode after 8 seconds
       stampModeTimer.current = setTimeout(() => {
         setIsStampMode(false);
-        console.log("Maple leaf stamp mode disabled");
+        console.log("🍁 Maple leaf stamp mode disabled");
+      }, 8000); // 8 seconds
+
+      return;
+    }
+
+    // Enable daisy stamp mode for 07.png (click only)
+    if (imageId === "07.png") {
+      console.log("🌼 Enabling daisy stamp mode for 8 seconds");
+      setIsDaisyStampMode(true);
+
+      // Clear any existing timer
+      if (daisyStampModeTimer.current) {
+        clearTimeout(daisyStampModeTimer.current);
+      }
+
+      // Disable daisy stamp mode after 8 seconds
+      daisyStampModeTimer.current = setTimeout(() => {
+        setIsDaisyStampMode(false);
+        console.log("🌼 Daisy stamp mode disabled");
       }, 8000); // 8 seconds
 
       return;
@@ -955,6 +986,11 @@ export default function PetNamesCanvas() {
   // Remove completed maple leaves
   const removeMapleLeaf = (id) => {
     setMapleLeaves((prev) => prev.filter((leaf) => leaf.id !== id));
+  };
+
+  // Remove completed daisies
+  const removeDaisy = (id) => {
+    setDaisies((prev) => prev.filter((daisy) => daisy.id !== id));
   };
 
   // Smooth follow animation with infinite scroll wrapping
@@ -1056,6 +1092,9 @@ export default function PetNamesCanvas() {
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
+    // Update cursor position for stamp modes
+    setCursorPosition({ x: clientX, y: clientY });
+
     // If in stamp mode, create a maple leaf stamp
     if (isStampMode) {
       console.log("Stamping maple leaf at", clientX, clientY);
@@ -1066,6 +1105,18 @@ export default function PetNamesCanvas() {
       };
       setMapleLeaves((prev) => [...prev, newLeaf]);
       return; // Don't start dragging in stamp mode
+    }
+
+    // If in daisy stamp mode, create a daisy stamp
+    if (isDaisyStampMode) {
+      console.log("Stamping daisy at", clientX, clientY);
+      const newDaisy = {
+        id: `daisy-${Date.now()}-${Math.random()}`,
+        x: clientX,
+        y: clientY,
+      };
+      setDaisies((prev) => [...prev, newDaisy]);
+      return; // Don't start dragging in daisy stamp mode
     }
 
     setIsDragging(true);
@@ -1087,6 +1138,14 @@ export default function PetNamesCanvas() {
   };
 
   const handlePointerMove = (e) => {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    // Update cursor position for custom stamp cursor
+    if (isStampMode || isDaisyStampMode) {
+      setCursorPosition({ x: clientX, y: clientY });
+    }
+
     if (!isDragging) return;
 
     // If stamp mode is active and user starts dragging, disable stamp mode
@@ -1099,8 +1158,15 @@ export default function PetNamesCanvas() {
       }
     }
 
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    // If daisy stamp mode is active and user starts dragging, disable daisy stamp mode
+    if (isDaisyStampMode) {
+      console.log("Drag detected - disabling daisy stamp mode");
+      setIsDaisyStampMode(false);
+      if (daisyStampModeTimer.current) {
+        clearTimeout(daisyStampModeTimer.current);
+        daisyStampModeTimer.current = null;
+      }
+    }
 
     // Calculate velocity for momentum (no limit during drag for smooth movement)
     velocity.current.x = clientX - lastPosition.current.x;
@@ -1175,11 +1241,32 @@ export default function PetNamesCanvas() {
     };
   }, []);
 
-  // Cleanup stamp mode timer and pumpkin spawn flag on unmount
+  // Track cursor position when stamp modes are active
+  useEffect(() => {
+    if (!isStampMode && !isDaisyStampMode) return;
+
+    const updateCursorPos = (e) => {
+      const clientX = e.clientX;
+      const clientY = e.clientY;
+      setCursorPosition({ x: clientX, y: clientY });
+    };
+
+    // Add listener to window to track cursor globally
+    window.addEventListener("mousemove", updateCursorPos);
+
+    return () => {
+      window.removeEventListener("mousemove", updateCursorPos);
+    };
+  }, [isStampMode, isDaisyStampMode]);
+
+  // Cleanup stamp mode timers and pumpkin spawn flag on unmount
   useEffect(() => {
     return () => {
       if (stampModeTimer.current) {
         clearTimeout(stampModeTimer.current);
+      }
+      if (daisyStampModeTimer.current) {
+        clearTimeout(daisyStampModeTimer.current);
       }
       isPumpkinSpawning.current = false; // Reset global flag
     };
@@ -1188,8 +1275,17 @@ export default function PetNamesCanvas() {
   return (
     <div
       ref={containerRef}
-      className="pet-names-canvas"
-      style={{ cursor: isStampMode ? "crosshair" : "grab" }}
+      className={`pet-names-canvas ${
+        isDaisyStampMode ? "daisy-stamp-mode" : ""
+      } ${isStampMode ? "maple-stamp-mode" : ""}`}
+      style={{ 
+        cursor: isDaisyStampMode 
+          ? "cell" 
+          : isStampMode 
+          ? "crosshair" 
+          : "grab",
+        pointerEvents: "auto"
+      }}
       onMouseDown={handlePointerDown}
       onMouseMove={handlePointerMove}
       onMouseUp={handlePointerUp}
@@ -1297,14 +1393,58 @@ export default function PetNamesCanvas() {
 
           {/* Render maple leaf stamps */}
           {mapleLeaves.map((leaf) => (
-            <MapleLeaf
+            <Stamp
               key={leaf.id}
               id={leaf.id}
               x={leaf.x}
               y={leaf.y}
+              imageSrc="/pets/mapleleaf.png"
+              imageAlt="maple leaf"
+              size={80}
               onComplete={removeMapleLeaf}
             />
           ))}
+
+          {/* Render daisy stamps */}
+          {daisies.map((daisy) => (
+            <Stamp
+              key={daisy.id}
+              id={daisy.id}
+              x={daisy.x}
+              y={daisy.y}
+              imageSrc="/pets/daisy.png"
+              imageAlt="daisy"
+              size={30}
+              onComplete={removeDaisy}
+            />
+          ))}
+
+          {/* Custom cursor for stamp modes */}
+          {(isStampMode || isDaisyStampMode) && cursorPosition.x !== 0 && (
+            <div
+              style={{
+                position: "fixed",
+                left: `${cursorPosition.x}px`,
+                top: `${cursorPosition.y}px`,
+                width: isStampMode ? "80px" : "30px",
+                height: isStampMode ? "80px" : "30px",
+                pointerEvents: "none",
+                zIndex: 10000,
+                transform: "translate(-50%, -50%)",
+                opacity: 0.7,
+              }}
+            >
+              <img
+                src={isStampMode ? "/pets/mapleleaf.png" : "/pets/daisy.png"}
+                alt="stamp cursor"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                }}
+              />
+            </div>
+          )}
         </>
       )}
     </div>

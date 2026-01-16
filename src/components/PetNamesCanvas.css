@@ -5,15 +5,32 @@
   background-image: radial-gradient(circle, #75758a 1px, transparent 1px);
   background-size: 50px 50px;
   background-position: center center;
-  cursor: grab;
   position: relative;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+  cursor: grab !important;
 }
 
 .pet-names-canvas:active {
-  cursor: grabbing;
+  cursor: grabbing !important;
+}
+
+/* Stamp mode cursor overrides - hide default cursor */
+.pet-names-canvas.maple-stamp-mode {
+  cursor: none !important;
+}
+
+.pet-names-canvas.maple-stamp-mode:active {
+  cursor: none !important;
+}
+
+.pet-names-canvas.daisy-stamp-mode {
+  cursor: none !important;
+}
+
+.pet-names-canvas.daisy-stamp-mode:active {
+  cursor: none !important;
 }
 
 .pet-images-grid {
@@ -38,7 +55,6 @@
   transform: translate(-50%, -50%) translateZ(0);
   backface-visibility: hidden;
   transition: transform 0.4s ease-in-out;
-  cursor: pointer;
 }
 
 .pet-image-item:hover {
