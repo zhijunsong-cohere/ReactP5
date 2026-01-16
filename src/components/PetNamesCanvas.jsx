@@ -1013,61 +1013,37 @@ export default function PetNamesCanvas() {
       gridVelocity.current.x = currentPosition.current.x - prevX;
       gridVelocity.current.y = currentPosition.current.y - prevY;
 
-      // Wrap target position for infinite scroll with conservative approach
-      // Use 2x grid size threshold to provide more buffer
-      const wrapThresholdX = gridWidth * 2;
-      const wrapThresholdY = gridHeight * 2;
+      // Wrap target position for infinite scroll - immediate wrapping
+      // Use 1.2x grid size threshold for quicker wrapping
+      const wrapThresholdX = gridWidth * 1.2;
+      const wrapThresholdY = gridHeight * 1.2;
 
-      // Calculate movement speed
-      const deltaX = Math.abs(
-        targetPosition.current.x - currentPosition.current.x
-      );
-      const deltaY = Math.abs(
-        targetPosition.current.y - currentPosition.current.y
-      );
-      const totalDelta = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      // Wrap immediately when crossing threshold
+      let didWrap = false;
 
-      // Track velocity magnitude
-      const velocityMag = Math.sqrt(
-        velocity.current.x ** 2 + velocity.current.y ** 2
-      );
+      if (targetPosition.current.x > wrapThresholdX) {
+        targetPosition.current.x -= gridWidth;
+        currentPosition.current.x -= gridWidth;
+        didWrap = true;
+      } else if (targetPosition.current.x < -wrapThresholdX) {
+        targetPosition.current.x += gridWidth;
+        currentPosition.current.x += gridWidth;
+        didWrap = true;
+      }
 
-      // Only wrap when:
-      // 1. Movement is very slow (delta < 50px)
-      // 2. Velocity is low (< 10px/frame)
-      // 3. At least 300ms since last wrap (cooldown)
-      const now = Date.now();
-      const timeSinceLastWrap = now - lastWrapTime.current;
-      const canWrap =
-        totalDelta < 50 && velocityMag < 10 && timeSinceLastWrap > 300;
+      if (targetPosition.current.y > wrapThresholdY) {
+        targetPosition.current.y -= gridHeight;
+        currentPosition.current.y -= gridHeight;
+        didWrap = true;
+      } else if (targetPosition.current.y < -wrapThresholdY) {
+        targetPosition.current.y += gridHeight;
+        currentPosition.current.y += gridHeight;
+        didWrap = true;
+      }
 
-      if (canWrap) {
-        let didWrap = false;
-
-        if (targetPosition.current.x > wrapThresholdX) {
-          targetPosition.current.x -= gridWidth;
-          currentPosition.current.x -= gridWidth;
-          didWrap = true;
-        } else if (targetPosition.current.x < -wrapThresholdX) {
-          targetPosition.current.x += gridWidth;
-          currentPosition.current.x += gridWidth;
-          didWrap = true;
-        }
-
-        if (targetPosition.current.y > wrapThresholdY) {
-          targetPosition.current.y -= gridHeight;
-          currentPosition.current.y -= gridHeight;
-          didWrap = true;
-        } else if (targetPosition.current.y < -wrapThresholdY) {
-          targetPosition.current.y += gridHeight;
-          currentPosition.current.y += gridHeight;
-          didWrap = true;
-        }
-
-        // Update last wrap time if we wrapped
-        if (didWrap) {
-          lastWrapTime.current = now;
-        }
+      // Update last wrap time if wrapped
+      if (didWrap) {
+        lastWrapTime.current = Date.now();
       }
 
       // Apply transform to content
