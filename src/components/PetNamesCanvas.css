@@ -1,3 +1,14 @@
+/* Prevent page scroll */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  overscroll-behavior: none;
+}
+
 .pet-names-canvas {
   width: 100vw;
   height: 100vh;
@@ -5,11 +16,17 @@
   background-image: radial-gradient(circle, #75758a 1px, transparent 1px);
   background-size: 50px 50px;
   background-position: center center;
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
   cursor: grab !important;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .pet-names-canvas:active {
@@ -56,6 +73,9 @@
   backface-visibility: hidden;
   transition: transform 0.4s ease-in-out;
   border-radius: 8px;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-drag: none;
 }
 
 .pet-image-item:hover {
@@ -220,7 +240,10 @@
   object-fit: contain;
   pointer-events: none;
   user-select: none;
+  -webkit-user-select: none;
   -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
   transform: translateZ(0);
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
