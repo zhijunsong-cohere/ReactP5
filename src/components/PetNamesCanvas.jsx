@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
 import gsap from "gsap";
-import { Draggable } from "gsap/Draggable";
 import PetImageItem from "./PetImageItem";
 import Stamp from "./Stamp";
 import Pumpkin from "./Pumpkin";
@@ -8,9 +7,6 @@ import CustomCursor from "./CustomCursor";
 import useReducedMotion from "../hooks/useReducedMotion";
 import { petImages } from "../constants/petImages";
 import "./PetNamesCanvas.css";
-
-// Register GSAP plugins
-gsap.registerPlugin(Draggable);
 
 export default function PetNamesCanvas() {
   const containerRef = useRef(null);
@@ -368,157 +364,181 @@ export default function PetNamesCanvas() {
     }
   };
 
-  // Setup GSAP Draggable for drag tracking
-  useEffect(() => {
-    const container = containerRef.current;
-    const content = contentRef.current;
-    if (!container || !content) return;
+  // Mouse/Touch drag handlers
+  const handlePointerDown = (e) => {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-    // Store initial transform to preserve it
-    const initialTransform = { x: currentPosition.current.x, y: currentPosition.current.y };
-    
-    // Track velocity manually
-    let dragStartX = 0;
-    let dragStartY = 0;
-    let lastDragTime = Date.now();
-    let lastDragX = 0;
-    let lastDragY = 0;
-    let dragVelocityX = 0;
-    let dragVelocityY = 0;
+    // Update cursor position for stamp modes
+    setCursorPosition({ x: clientX, y: clientY });
 
-    const draggableInstance = Draggable.create(content, {
-      trigger: container,
-      type: "x,y",
-      edgeResistance: 0,
-      dragResistance: 0,
-      allowContextMenu: false,
-      onPress: function(e) {
-        // If in stamp mode, prevent dragging
-        if (isStampMode || isDaisyStampMode) {
-          this.endDrag(e);
-          return;
-        }
-        
-        setIsDragging(true);
-        container.style.cursor = "grabbing";
-        
-        // Store the current target position as our drag start point
-        dragStartX = targetPosition.current.x;
-        dragStartY = targetPosition.current.y;
-        
-        // Initialize velocity tracking - lastDragX/Y should track changes from current position
-        lastDragX = this.x || 0;
-        lastDragY = this.y || 0;
-        lastDragTime = Date.now();
-        dragVelocityX = 0;
-        dragVelocityY = 0;
-        
-        // Kill any ongoing GSAP animations
-        gsap.killTweensOf(targetPosition.current);
-      },
-      
-      onDrag: function() {
-        // Cancel stamp modes if dragging starts
+    // If in stamp mode, create a maple leaf stamp
     if (isStampMode) {
+      console.log("Stamping maple leaf at", clientX, clientY);
+      const newLeaf = {
+        id: `maple-${Date.now()}-${Math.random()}`,
+        x: clientX,
+        y: clientY,
+      };
+      setMapleLeaves((prev) => [...prev, newLeaf]);
+      return; // Don't start dragging in stamp mode
+    }
+
+    // If in daisy stamp mode, create a daisy stamp
+    if (isDaisyStampMode) {
+      console.log("Stamping daisy at", clientX, clientY);
+      const newDaisy = {
+        id: `daisy-${Date.now()}-${Math.random()}`,
+        x: clientX,
+        y: clientY,
+      };
+      setDaisies((prev) => [...prev, newDaisy]);
+      return; // Don't start dragging in daisy stamp mode
+    }
+
+    setIsDragging(true);
+
+    dragStart.current = {
+      x: clientX - targetPosition.current.x,
+      y: clientY - targetPosition.current.y,
+    };
+
+    lastPosition.current = { x: clientX, y: clientY };
+    velocity.current = { x: 0, y: 0 };
+
+    // Kill any ongoing GSAP animations
+    gsap.killTweensOf(targetPosition.current);
+
+    if (containerRef.current) {
+      containerRef.current.style.cursor = "grabbing";
+    }
+  };
+
+  const handlePointerMove = (e) => {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    // Update cursor position for custom stamp cursor
+    if (isStampMode || isDaisyStampMode) {
+      setCursorPosition({ x: clientX, y: clientY });
+    }
+
+    if (!isDragging) return;
+
+    // If stamp mode is active and user starts dragging, disable stamp mode
+    if (isStampMode) {
+      console.log("Drag detected - disabling stamp mode");
       setIsStampMode(false);
       if (stampModeTimer.current) {
         clearTimeout(stampModeTimer.current);
         stampModeTimer.current = null;
       }
     }
-        if (isDaisyStampMode) {
-          setIsDaisyStampMode(false);
-          if (daisyStampModeTimer.current) {
-            clearTimeout(daisyStampModeTimer.current);
-            daisyStampModeTimer.current = null;
-          }
-        }
-        
-        // Calculate velocity manually
-        const now = Date.now();
-        const dt = Math.max((now - lastDragTime) / 16.67, 1); // Normalize to 60fps
-        const deltaX = this.x - lastDragX;
-        const deltaY = this.y - lastDragY;
-        
-        dragVelocityX = deltaX / dt;
-        dragVelocityY = deltaY / dt;
-        
-        lastDragX = this.x;
-        lastDragY = this.y;
-        lastDragTime = now;
-        
-        // Update target position based on TOTAL drag from start (respecting max distance limits)
-        const totalDragX = this.x - this.startX;
-        const totalDragY = this.y - this.startY;
-        
-        targetPosition.current.x = Math.max(
-          -maxDragDistance,
-          Math.min(maxDragDistance, dragStartX + totalDragX)
-        );
-        targetPosition.current.y = Math.max(
-          -maxDragDistance,
-          Math.min(maxDragDistance, dragStartY + totalDragY)
-        );
-        
-        // Update velocity ref for grid velocity tracking
-        velocity.current.x = dragVelocityX;
-        velocity.current.y = dragVelocityY;
-        
-        // Override GSAP's transform - our animation loop will handle it
-        content.style.transform = `translate(${currentPosition.current.x}px, ${currentPosition.current.y}px)`;
-      },
-      
-      onDragEnd: function() {
+
+    // If daisy stamp mode is active and user starts dragging, disable daisy stamp mode
+    if (isDaisyStampMode) {
+      console.log("Drag detected - disabling daisy stamp mode");
+      setIsDaisyStampMode(false);
+      if (daisyStampModeTimer.current) {
+        clearTimeout(daisyStampModeTimer.current);
+        daisyStampModeTimer.current = null;
+      }
+    }
+
+    // Calculate velocity for momentum
+    velocity.current.x = clientX - lastPosition.current.x;
+    velocity.current.y = clientY - lastPosition.current.y;
+
+    lastPosition.current = { x: clientX, y: clientY };
+
+    // Update target position directly for 1:1 drag feel
+    const newX = clientX - dragStart.current.x;
+    const newY = clientY - dragStart.current.y;
+
+    targetPosition.current.x = Math.max(
+      -maxDragDistance,
+      Math.min(maxDragDistance, newX)
+    );
+    targetPosition.current.y = Math.max(
+      -maxDragDistance,
+      Math.min(maxDragDistance, newY)
+    );
+  };
+
+  const handlePointerUp = () => {
     setIsDragging(false);
-        container.style.cursor = isStampMode ? "crosshair" : isDaisyStampMode ? "cell" : "grab";
-        
-        // Apply momentum with GSAP using manually tracked velocity
-        const momentumMultiplier = 12;
-        const maxMomentum = 400;
-        
-        const momentumX = Math.max(-maxMomentum, Math.min(maxMomentum, dragVelocityX * momentumMultiplier));
-        const momentumY = Math.max(-maxMomentum, Math.min(maxMomentum, dragVelocityY * momentumMultiplier));
+
+    if (containerRef.current) {
+      containerRef.current.style.cursor = "grab";
+    }
+
+    // Apply momentum with GSAP
+    const momentumMultiplier = 12;
+    const maxMomentum = 400;
+    const momentumX = Math.max(
+      -maxMomentum,
+      Math.min(maxMomentum, velocity.current.x * momentumMultiplier)
+    );
+    const momentumY = Math.max(
+      -maxMomentum,
+      Math.min(maxMomentum, velocity.current.y * momentumMultiplier)
+    );
 
     gsap.to(targetPosition.current, {
-          x: Math.max(-maxDragDistance, Math.min(maxDragDistance, targetPosition.current.x + momentumX)),
-          y: Math.max(-maxDragDistance, Math.min(maxDragDistance, targetPosition.current.y + momentumY)),
-          duration: 1.0,
+      x: Math.max(
+        -maxDragDistance,
+        Math.min(maxDragDistance, targetPosition.current.x + momentumX)
+      ),
+      y: Math.max(
+        -maxDragDistance,
+        Math.min(maxDragDistance, targetPosition.current.y + momentumY)
+      ),
+      duration: 1.0,
       ease: "power2.out",
     });
-      }
-    })[0];
+  };
 
-    // Handle wheel scrolling
+  // Wheel scroll handler
   const handleWheel = (e) => {
     e.preventDefault();
 
     // Limit maximum scroll speed and apply smoothing multiplier
-      const maxDelta = 40;
-      const smoothing = 0.8;
-      const deltaX = Math.max(-maxDelta, Math.min(maxDelta, e.deltaX * smoothing));
-      const deltaY = Math.max(-maxDelta, Math.min(maxDelta, e.deltaY * smoothing));
+    const maxDelta = 40;
+    const smoothing = 0.8;
+    const deltaX = Math.max(
+      -maxDelta,
+      Math.min(maxDelta, e.deltaX * smoothing)
+    );
+    const deltaY = Math.max(
+      -maxDelta,
+      Math.min(maxDelta, e.deltaY * smoothing)
+    );
 
-      // Update target position with scroll delta
-      targetPosition.current.x = Math.max(
-        -maxScrollDistance,
-        Math.min(maxScrollDistance, targetPosition.current.x - deltaX)
-      );
-      targetPosition.current.y = Math.max(
-        -maxScrollDistance,
-        Math.min(maxScrollDistance, targetPosition.current.y - deltaY)
-      );
+    // Update target position with scroll delta
+    targetPosition.current.x = Math.max(
+      -maxScrollDistance,
+      Math.min(maxScrollDistance, targetPosition.current.x - deltaX)
+    );
+    targetPosition.current.y = Math.max(
+      -maxScrollDistance,
+      Math.min(maxScrollDistance, targetPosition.current.y - deltaY)
+    );
 
-      // Kill any ongoing animations for immediate response
+    // Kill any ongoing animations for immediate response
     gsap.killTweensOf(targetPosition.current);
   };
 
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Add wheel listener with passive: false to allow preventDefault
     container.addEventListener("wheel", handleWheel, { passive: false });
 
     return () => {
-      if (draggableInstance) draggableInstance.kill();
       container.removeEventListener("wheel", handleWheel);
     };
-  }, [isStampMode, isDaisyStampMode, maxDragDistance, maxScrollDistance]);
+  }, [maxScrollDistance]);
 
   // Track cursor position when stamp modes are active
   useEffect(() => {
@@ -565,8 +585,13 @@ export default function PetNamesCanvas() {
           : "grab",
         pointerEvents: "auto"
       }}
-      onClick={handleCanvasClick}
-      onMouseMove={handleMouseMove}
+      onMouseDown={handlePointerDown}
+      onMouseMove={handlePointerMove}
+      onMouseUp={handlePointerUp}
+      onMouseLeave={handlePointerUp}
+      onTouchStart={handlePointerDown}
+      onTouchMove={handlePointerMove}
+      onTouchEnd={handlePointerUp}
       onContextMenu={handleContextMenu}
       onDragStart={handleDragStart}
       role="application"
