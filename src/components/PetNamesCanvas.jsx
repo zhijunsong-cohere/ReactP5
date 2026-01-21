@@ -323,8 +323,15 @@ function PetImageItem({
     }
   };
 
+  // Throttle mouse move for better performance
+  const lastMouseMoveTime = useRef(0);
   const handleMouseMove = (e) => {
     if (!shouldTiltAndSwap || !itemRef.current) return;
+
+    // Throttle to max 60fps (16ms)
+    const now = Date.now();
+    if (now - lastMouseMoveTime.current < 16) return;
+    lastMouseMoveTime.current = now;
 
     const rect = itemRef.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
