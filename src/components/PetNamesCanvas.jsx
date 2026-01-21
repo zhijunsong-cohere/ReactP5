@@ -66,6 +66,67 @@ function PetImageItem({
   // Check if this image should wiggle and spawn pumpkins on click (23.png)
   const shouldWiggleAndSpawn = imageId === "23.png";
 
+  // Check if this image should change based on momentum (13.png)
+  const shouldChangeMomentum = imageId === "13.png";
+  const [momentumState, setMomentumState] = useState("coasting"); // "coasting", "forward", "backward"
+  const [frameRotation, setFrameRotation] = useState(0); // Dynamic rotation for frame.svg
+
+  // Monitor grid velocity for 13.png momentum-based image switching
+  useEffect(() => {
+    if (!shouldChangeMomentum) return;
+
+    const checkMomentum = () => {
+      const velocityX = gridVelocity.current.x;
+      const velocityY = gridVelocity.current.y;
+      const totalVelocity = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+
+      // Calculate dramatic rotation based on velocity
+      // Use atan2 to get angle, then amplify it
+      const angle = Math.atan2(velocityY, velocityX) * (180 / Math.PI);
+      const rotationIntensity = Math.min(totalVelocity * 3, 15); // Max 15 degrees tilt
+      
+      // Apply rotation based on direction
+      let rotation = 0;
+      if (totalVelocity > 0.5) {
+        // Tilt in the direction of movement
+        rotation = angle * 0.3 + rotationIntensity * Math.sign(velocityX);
+      }
+      
+      setFrameRotation(rotation);
+
+      // Determine direction based on dominant axis
+      let newState = momentumState;
+      
+      if (totalVelocity < 0.5) {
+        // Nearly stationary - coasting
+        newState = "coasting";
+      } else if (Math.abs(velocityX) > Math.abs(velocityY)) {
+        // Horizontal movement dominates
+        if (velocityX > 0) {
+          newState = "forward"; // Moving right
+        } else {
+          newState = "backward"; // Moving left
+        }
+      } else {
+        // Vertical movement dominates
+        if (velocityY > 0) {
+          newState = "forward"; // Moving down
+        } else {
+          newState = "backward"; // Moving up
+        }
+      }
+
+      if (newState !== momentumState) {
+        console.log(`🎬 Momentum state changed: ${momentumState} → ${newState} (velocity: ${totalVelocity.toFixed(2)})`);
+        setMomentumState(newState);
+      }
+    };
+
+    const intervalId = setInterval(checkMomentum, 50); // Check every 50ms for smoother rotation
+
+    return () => clearInterval(intervalId);
+  }, [shouldChangeMomentum, gridVelocity, momentumState]);
+
   // Get descriptive name for accessibility
   const getImageDescription = () => {
     const descriptions = {
@@ -74,6 +135,7 @@ function PetImageItem({
       "03.png": "3D tilting card - Hover to interact",
       "05.png": "Canadian maple leaf - Click to activate stamp mode",
       "07.png": "Daisy flower - Click to activate stamp mode",
+      "13.png": `Dynamic momentum animation - Currently ${momentumState}`,
       "17.png": "Fortune cookie - Hover to see animation",
       "19.svg": "Cohere logo with holographic effect",
       "23.png": "Pumpkin - Click to spawn flying pumpkins",
@@ -550,6 +612,58 @@ function PetImageItem({
               }}
             />
           </div>
+        ) : shouldChangeMomentum ? (
+          // Momentum-based image switching for 13.png with constant frame.svg overlay
+          <div
+            className="momentum-animation-container"
+            style={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative",
+            }}
+          >
+            {/* Background animation - changes based on momentum */}
+            <img
+              src={
+                momentumState === "coasting"
+                  ? "/pets/Coasting.gif"
+                  : momentumState === "forward"
+                  ? "/pets/Transition.gif"
+                  : "/pets/Push.gif"
+              }
+              alt={`${momentumState} animation`}
+              draggable={false}
+              style={{
+                position: "absolute",
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+                zIndex: 1,
+              }}
+              onLoad={() => console.log(`✅ Loaded: ${momentumState} GIF`)}
+              onError={(e) => console.error(`❌ Failed to load: ${momentumState} GIF`, e)}
+            />
+            {/* Debug indicator */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: "5px",
+                right: "5px",
+                background: "rgba(0,0,0,0.7)",
+                color: "white",
+                padding: "2px 5px",
+                fontSize: "10px",
+                borderRadius: "3px",
+                zIndex: 10,
+                pointerEvents: "none",
+              }}
+            >
+              {momentumState} {frameRotation.toFixed(1)}°
+            </div>
+          </div>
         ) : (
           <img
             src={
@@ -882,6 +996,10 @@ export default function PetNamesCanvas() {
       "/pets/17-4.png",
       "/pets/mapleleaf.png",
       "/pets/daisy.png",
+      "/pets/frame.svg",
+      "/pets/Coasting.gif",
+      "/pets/Transition.gif",
+      "/pets/Push.gif",
     ];
     const allImages = [...petImages, ...specialImages];
 
