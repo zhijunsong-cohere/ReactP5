@@ -117,7 +117,7 @@ function PetImageItem({
       }
 
       if (newState !== momentumState) {
-        console.log(`🎬 Momentum state changed: ${momentumState} → ${newState} (velocity: ${totalVelocity.toFixed(2)})`);
+        console.log(`Momentum state changed: ${momentumState} → ${newState} (velocity: ${totalVelocity.toFixed(2)})`);
         setMomentumState(newState);
       }
     };
@@ -291,11 +291,11 @@ function PetImageItem({
 
     // If this is 23.png, wiggle first then spawn pumpkins
     if (shouldWiggleAndSpawn) {
-      console.log("🔄 Starting wiggle animation for 23.png");
+      console.log("Starting wiggle animation for 23.png");
 
       // Clear any existing wiggle timer
       if (wiggleTimerRef.current) {
-        console.log("⚠️ Clearing existing wiggle timer");
+        console.log("Clearing existing wiggle timer");
         clearTimeout(wiggleTimerRef.current);
         wiggleTimerRef.current = null;
       }
@@ -304,7 +304,7 @@ function PetImageItem({
 
       // After wiggle completes (600ms), stop wiggling and spawn pumpkins
       wiggleTimerRef.current = setTimeout(() => {
-        console.log("🔄 Wiggle complete - calling spawn handler");
+        console.log("Wiggle complete - calling spawn handler");
         setIsWiggling(false);
         onImageClick(imageId, { x: x, y: y });
         wiggleTimerRef.current = null;
@@ -666,8 +666,8 @@ function PetImageItem({
                 objectFit: "contain",
                 zIndex: 1,
               }}
-              onLoad={() => console.log(`✅ Loaded: ${momentumState} GIF`)}
-              onError={(e) => console.error(`❌ Failed to load: ${momentumState} GIF`, e)}
+              onLoad={() => console.log(`Loaded: ${momentumState} GIF`)}
+              onError={(e) => console.error(`Failed to load: ${momentumState} GIF`, e)}
             />
             {/* Debug indicator */}
             <div

@@ -179,11 +179,11 @@ export default function PetNamesCanvas() {
     if (imageId === "23.png") {
       // Check global flag to prevent multiple spawns from different 23.png instances
       if (isPumpkinSpawning.current) {
-        console.log("❌ Pumpkin spawn already in progress (global) - ignoring");
+        console.log("Pumpkin spawn already in progress (global) - ignoring");
         return;
       }
 
-      console.log("✅ Spawning pumpkin burst!");
+      console.log("Spawning pumpkin burst!");
       isPumpkinSpawning.current = true; // Set global flag
 
       const now = Date.now();
@@ -222,20 +222,20 @@ export default function PetNamesCanvas() {
         });
       }
 
-      console.log(`🎃 Adding ${newPumpkins.length} pumpkins to state`);
+      console.log(`Adding ${newPumpkins.length} pumpkins to state`);
       setPumpkins((prev) => [...prev, ...newPumpkins]);
 
       // Reset global flag after spawn completes (allow next spawn after 2s debounce)
       setTimeout(() => {
         isPumpkinSpawning.current = false;
-        console.log("✅ Global spawn flag reset - ready for next spawn");
+        console.log("Global spawn flag reset - ready for next spawn");
       }, 100);
     }
   };
 
   // Remove completed pumpkins
   const removePumpkin = (id) => {
-    console.log(`🎃 Pumpkin ${id} completed animation`);
+    console.log(`Pumpkin ${id} completed animation`);
     setPumpkins((prev) => prev.filter((p) => p.id !== id));
   };
 
