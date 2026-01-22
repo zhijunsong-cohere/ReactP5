@@ -255,6 +255,29 @@ html, body {
   will-change: opacity;
 }
 
+/* Video specific styles */
+video.pet-image-base {
+  object-fit: contain;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+video.pet-image-base::-webkit-media-controls {
+  display: none !important;
+}
+
+video.pet-image-base::-webkit-media-controls-enclosure {
+  display: none !important;
+}
+
+video.pet-image-base::-webkit-media-controls-panel {
+  display: none !important;
+}
+
+video.pet-image-base::-webkit-media-controls-play-button {
+  display: none !important;
+}
+
 /* Scrollbar styling for black background */
 .pet-names-canvas::-webkit-scrollbar {
   width: 12px;

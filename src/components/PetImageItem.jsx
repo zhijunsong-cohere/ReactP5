@@ -50,6 +50,9 @@ function PetImageItem({
   // Check if this image should flip horizontally on hover
   const shouldFlip = imageId === "24.png";
 
+  // Check if this is a video file
+  const isVideo = imageId.endsWith(".mp4") || imageId.endsWith(".webm") || imageId.endsWith(".mov");
+
   // Check if this image should have shiny tile SVG effect (using 19.svg as co:here logo)
   const shouldShinyTile = imageId === "19.svg";
 
@@ -138,10 +141,11 @@ function PetImageItem({
       "13.png": `Dynamic momentum animation - Currently ${momentumState}`,
       "17.png": "Fortune cookie - Hover to see animation",
       "19.svg": "Cohere logo with holographic effect",
+      "22.mp4": "Looping video animation",
       "23.png": "Pumpkin - Click to spawn flying pumpkins",
       "24.png": "Flipping image",
     };
-    return descriptions[imageId] || `Interactive pet image ${index + 1}`;
+    return descriptions[imageId] || `Interactive pet ${isVideo ? 'video' : 'image'} ${index + 1}`;
   };
 
   // Stop motion animation state
@@ -687,6 +691,36 @@ function PetImageItem({
               {momentumState} {frameRotation.toFixed(1)}°
             </div>
           </div>
+        ) : isVideo ? (
+          <video
+            src={image}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="pet-image-base"
+            style={{
+              position: "relative",
+              zIndex: 2,
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+            }}
+            onLoadedMetadata={(e) => {
+              // Maintain aspect ratio
+              const video = e.target;
+              const aspectRatio = video.videoWidth / video.videoHeight;
+              if (aspectRatio > 1) {
+                // Landscape
+                video.style.width = "100%";
+                video.style.height = "auto";
+              } else {
+                // Portrait or square
+                video.style.width = "auto";
+                video.style.height = "100%";
+              }
+            }}
+          />
         ) : (
           <img
             src={

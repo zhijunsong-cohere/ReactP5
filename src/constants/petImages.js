@@ -23,7 +23,7 @@ export const petImages = [
   "/pets/19.svg",
   "/pets/20.png",
   "/pets/21.png",
-  "/pets/22.png",
+  "/pets/22.mp4",
   "/pets/23.png",
   "/pets/24.png",
 ];
