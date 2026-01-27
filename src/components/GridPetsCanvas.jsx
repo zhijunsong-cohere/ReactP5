@@ -142,20 +142,7 @@ function PetImage({
   useEffect(() => {
     if (!animationFrames || animationFrames.length === 0) return;
 
-    console.log(
-      "Animation component - hovered:",
-      hovered,
-      "animationFrames:",
-      animationFrames.length
-    );
-
     if (hovered && !animationState.current.hasPlayed) {
-      console.log(
-        "Starting animation for image:",
-        imagePath,
-        "Total frames:",
-        animationFrames.length
-      );
       // Start animation
       animationState.current.isPlaying = true;
       animationState.current.currentFrame = 1; // Start at frame 1 (frame 0 is already displayed)
@@ -166,12 +153,6 @@ function PetImage({
       // Play through remaining frames
       const frameInterval = setInterval(() => {
         animationState.current.currentFrame += 1;
-        console.log(
-          "Animation frame:",
-          animationState.current.currentFrame,
-          "of",
-          animationFrames.length
-        );
 
         if (animationState.current.currentFrame < animationFrames.length) {
           setCurrentTexture(
@@ -179,7 +160,6 @@ function PetImage({
           );
         } else {
           // Animation complete
-          console.log("Animation complete");
           clearInterval(frameInterval);
           animationState.current.isPlaying = false;
           animationState.current.hasPlayed = true;
@@ -498,12 +478,6 @@ function Scene({ petImages, animationImages }) {
         const hasAnimation = imagePath.includes("pets/17.png");
         if (hasAnimation) {
           hasAnimatedImage = true;
-          console.log(
-            "Found animated image at index:",
-            index,
-            "path:",
-            imagePath
-          );
         }
 
         grid.push({
@@ -522,7 +496,6 @@ function Scene({ petImages, animationImages }) {
 
     // Ensure at least one animated image appears in the grid
     if (!hasAnimatedImage && grid.length > 0) {
-      console.log("Adding animated image to ensure it appears");
       const animatedTextureIndex = petImages.findIndex((path) =>
         path.includes("pets/17.png")
       );
@@ -535,12 +508,6 @@ function Scene({ petImages, animationImages }) {
       });
     }
 
-    console.log(
-      "Grid created with",
-      grid.length,
-      "images. Animation textures loaded:",
-      animationTextures.length
-    );
     return grid;
   }, [textures, petImages.length, animationTextures, petImages]);
 

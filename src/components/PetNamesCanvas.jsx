@@ -132,7 +132,6 @@ export default function PetNamesCanvas() {
   const handleImageClick = (imageId, position) => {
     // Enable maple leaf stamp mode for 05.png (click only)
     if (imageId === "05.png") {
-      console.log("🍁 Enabling maple leaf stamp mode for 8 seconds");
       setIsStampMode(true);
       setAnnouncement("Maple leaf stamp mode activated. Click anywhere to place maple leaves.");
 
@@ -145,7 +144,6 @@ export default function PetNamesCanvas() {
       stampModeTimer.current = setTimeout(() => {
         setIsStampMode(false);
         setAnnouncement("Maple leaf stamp mode deactivated.");
-        console.log("🍁 Maple leaf stamp mode disabled");
       }, 8000); // 8 seconds
 
       return;
@@ -153,7 +151,6 @@ export default function PetNamesCanvas() {
 
     // Enable daisy stamp mode for 07.png (click only)
     if (imageId === "07.png") {
-      console.log("🌼 Enabling daisy stamp mode for 8 seconds");
       setIsDaisyStampMode(true);
       setAnnouncement("Daisy stamp mode activated. Click anywhere to place daisies.");
 
@@ -166,7 +163,6 @@ export default function PetNamesCanvas() {
       daisyStampModeTimer.current = setTimeout(() => {
         setIsDaisyStampMode(false);
         setAnnouncement("Daisy stamp mode deactivated.");
-        console.log("🌼 Daisy stamp mode disabled");
       }, 8000); // 8 seconds
 
       return;
@@ -176,11 +172,9 @@ export default function PetNamesCanvas() {
     if (imageId === "23.png") {
       // Check global flag to prevent multiple spawns from different 23.png instances
       if (isPumpkinSpawning.current) {
-        console.log("Pumpkin spawn already in progress (global) - ignoring");
         return;
       }
 
-      console.log("Spawning pumpkin burst!");
       isPumpkinSpawning.current = true; // Set global flag
 
       const now = Date.now();
@@ -223,26 +217,22 @@ export default function PetNamesCanvas() {
       currentPumpkinBatch.current = batchId;
       pumpkinBatchCount.current = pumpkinCount;
 
-      console.log(`Adding ${newPumpkins.length} pumpkins to state (batch: ${batchId})`);
       setPumpkins((prev) => [...prev, ...newPumpkins]);
     }
   };
 
   // Remove completed pumpkins
   const removePumpkin = (id) => {
-    console.log(`Pumpkin ${id} completed animation - removing from state`);
     
     // Check if this pumpkin belongs to the current batch
     const batchId = currentPumpkinBatch.current;
     if (batchId && id.startsWith(batchId)) {
       pumpkinBatchCount.current -= 1;
-      console.log(`Batch ${batchId}: ${pumpkinBatchCount.current} pumpkins remaining`);
       
       // If all pumpkins in the batch are done, reset the spawn flag
       if (pumpkinBatchCount.current <= 0) {
         isPumpkinSpawning.current = false;
         currentPumpkinBatch.current = null;
-        console.log(`Batch ${batchId} complete - ready for next spawn`);
       }
     }
     
@@ -348,7 +338,6 @@ export default function PetNamesCanvas() {
 
     // If in stamp mode, create a maple leaf stamp
     if (isStampMode) {
-      console.log("Stamping maple leaf at", clientX, clientY);
       const newLeaf = {
         id: `maple-${Date.now()}-${Math.random()}`,
         x: clientX,
@@ -360,7 +349,6 @@ export default function PetNamesCanvas() {
 
     // If in daisy stamp mode, create a daisy stamp
     if (isDaisyStampMode) {
-      console.log("Stamping daisy at", clientX, clientY);
       const newDaisy = {
         id: `daisy-${Date.now()}-${Math.random()}`,
         x: clientX,
@@ -388,7 +376,6 @@ export default function PetNamesCanvas() {
 
     // If in stamp mode, create a maple leaf stamp
     if (isStampMode) {
-      console.log("Stamping maple leaf at", clientX, clientY);
       const newLeaf = {
         id: `maple-${Date.now()}-${Math.random()}`,
         x: clientX,
@@ -400,7 +387,6 @@ export default function PetNamesCanvas() {
 
     // If in daisy stamp mode, create a daisy stamp
     if (isDaisyStampMode) {
-      console.log("Stamping daisy at", clientX, clientY);
       const newDaisy = {
         id: `daisy-${Date.now()}-${Math.random()}`,
         x: clientX,
@@ -440,7 +426,6 @@ export default function PetNamesCanvas() {
 
     // If stamp mode is active and user starts dragging, disable stamp mode
     if (isStampMode) {
-      console.log("Drag detected - disabling stamp mode");
       setIsStampMode(false);
       if (stampModeTimer.current) {
         clearTimeout(stampModeTimer.current);
@@ -450,7 +435,6 @@ export default function PetNamesCanvas() {
 
     // If daisy stamp mode is active and user starts dragging, disable daisy stamp mode
     if (isDaisyStampMode) {
-      console.log("Drag detected - disabling daisy stamp mode");
       setIsDaisyStampMode(false);
       if (daisyStampModeTimer.current) {
         clearTimeout(daisyStampModeTimer.current);
@@ -467,7 +451,6 @@ export default function PetNamesCanvas() {
     const suspiciouslyLargeThreshold = 500; // If delta is > 500px, likely a glitch
     
     if (totalDelta > suspiciouslyLargeThreshold) {
-      console.log(`Ignoring suspicious delta: ${totalDelta.toFixed(0)}px - likely a gesture glitch`);
       // Reset last position to current to avoid accumulating the error
       lastPosition.current = { x: clientX, y: clientY };
       return; // Skip this frame

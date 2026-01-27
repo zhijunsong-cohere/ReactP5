@@ -120,7 +120,6 @@ function PetImageItem({
       }
 
       if (newState !== momentumState) {
-        console.log(`Momentum state changed: ${momentumState} → ${newState} (velocity: ${totalVelocity.toFixed(2)})`);
         setMomentumState(newState);
       }
     };
@@ -177,13 +176,10 @@ function PetImageItem({
     let fadeInterval = null;
 
     if (isHovered) {
-      console.log("Playing purr sound for 01.png with fade in");
       audioRef.current.currentTime = 0; // Reset to start
       audioRef.current.volume = 0; // Start from 0
 
-      audioRef.current.play().catch((error) => {
-        console.log("Audio play error:", error);
-      });
+      audioRef.current.play().catch(() => {});
 
       // Fade in over 300ms to volume 0.3
       const fadeInDuration = 300; // ms
@@ -240,7 +236,6 @@ function PetImageItem({
     if (!shouldPlayStopMotion) return;
 
     if (isHovered) {
-      console.log("Starting stop motion animation for 17.png");
       let frameIndex = 0;
 
       // Play through all frames once
@@ -251,7 +246,6 @@ function PetImageItem({
         if (frameIndex >= animationFrames.length) {
           clearInterval(animationInterval.current);
           animationInterval.current = null;
-          console.log("Animation complete - stopped at last frame");
         } else {
           setCurrentAnimFrame(frameIndex);
         }
@@ -286,20 +280,15 @@ function PetImageItem({
     const debounceTime = shouldWiggleAndSpawn ? 2000 : 500;
 
     if (timeSinceLastClick < debounceTime) {
-      console.log(
-        `Click debounced for ${imageId} - too soon (${timeSinceLastClick}ms)`
-      );
       return;
     }
     lastClickTime.current = now;
 
     // If this is 23.png, wiggle first then spawn pumpkins
     if (shouldWiggleAndSpawn) {
-      console.log("Starting wiggle animation for 23.png");
 
       // Clear any existing wiggle timer
       if (wiggleTimerRef.current) {
-        console.log("Clearing existing wiggle timer");
         clearTimeout(wiggleTimerRef.current);
         wiggleTimerRef.current = null;
       }
@@ -308,7 +297,6 @@ function PetImageItem({
 
       // After wiggle completes (600ms), stop wiggling and spawn pumpkins
       wiggleTimerRef.current = setTimeout(() => {
-        console.log("Wiggle complete - calling spawn handler");
         setIsWiggling(false);
         onImageClick(imageId, { x: x, y: y });
         wiggleTimerRef.current = null;
@@ -670,26 +658,7 @@ function PetImageItem({
                 objectFit: "contain",
                 zIndex: 1,
               }}
-              onLoad={() => console.log(`Loaded: ${momentumState} GIF`)}
-              onError={(e) => console.error(`Failed to load: ${momentumState} GIF`, e)}
             />
-            {/* Debug indicator */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: "5px",
-                right: "5px",
-                background: "rgba(0,0,0,0.7)",
-                color: "white",
-                padding: "2px 5px",
-                fontSize: "10px",
-                borderRadius: "3px",
-                zIndex: 10,
-                pointerEvents: "none",
-              }}
-            >
-              {momentumState} {frameRotation.toFixed(1)}°
-            </div>
           </div>
         ) : isVideo ? (
           <video

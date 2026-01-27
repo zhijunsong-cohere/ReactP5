@@ -21,11 +21,9 @@ function Pumpkin({ id, startX, startY, targetX, targetY, peakY, onComplete }) {
       onComplete: () => {
         // Ensure onComplete is only called once
         if (hasCompleted.current) {
-          console.log(`Pumpkin ${id} onComplete already called, skipping`);
           return;
         }
         hasCompleted.current = true;
-        console.log(`Pumpkin ${id} timeline complete - calling onComplete`);
         onCompleteRef.current(id);
       },
     });

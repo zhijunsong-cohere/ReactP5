@@ -14,7 +14,6 @@ function Stamp({ id, x, y, imageSrc, imageAlt, size = 80, onComplete }) {
 
     const tl = gsap.timeline({
       onComplete: () => {
-        console.log(`${imageAlt} stamp ${id} animation complete - removing`);
         onComplete(id);
       },
     });
