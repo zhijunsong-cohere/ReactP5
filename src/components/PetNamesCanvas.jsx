@@ -570,11 +570,19 @@ export default function PetNamesCanvas() {
     const container = containerRef.current;
     if (!container) return;
 
-    // Add wheel listener with passive: false to allow preventDefault
-    container.addEventListener("wheel", handleWheel, { passive: false });
+    // Use passive: false only when necessary, add capture to prevent conflicts
+    const options = { passive: false, capture: true };
+    container.addEventListener("wheel", handleWheel, options);
+
+    // Prevent scroll chaining to parent elements
+    const preventScrollChain = (e) => {
+      e.stopPropagation();
+    };
+    container.addEventListener("touchmove", preventScrollChain, { passive: false });
 
     return () => {
-      container.removeEventListener("wheel", handleWheel);
+      container.removeEventListener("wheel", handleWheel, options);
+      container.removeEventListener("touchmove", preventScrollChain);
     };
   }, [maxScrollDistance]);
 
