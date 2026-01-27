@@ -12,7 +12,6 @@ export default function PetNamesCanvas() {
   const containerRef = useRef(null);
   const contentRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
-  const dragStart = useRef({ x: 0, y: 0 });
   const [allLoaded, setAllLoaded] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showEntrance, setShowEntrance] = useState(false); // Trigger entrance animation
@@ -413,11 +412,7 @@ export default function PetNamesCanvas() {
 
     setIsDragging(true);
 
-    dragStart.current = {
-      x: clientX - targetPosition.current.x,
-      y: clientY - targetPosition.current.y,
-    };
-
+    // Store the current pointer position to calculate delta on move
     lastPosition.current = { x: clientX, y: clientY };
     velocity.current = { x: 0, y: 0 };
 
@@ -430,6 +425,9 @@ export default function PetNamesCanvas() {
   };
 
   const handlePointerMove = (e) => {
+    // Handle touch events - ensure we have a valid touch
+    if (e.touches && e.touches.length === 0) return;
+    
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
@@ -460,15 +458,35 @@ export default function PetNamesCanvas() {
       }
     }
 
-    // Calculate velocity for momentum
-    velocity.current.x = clientX - lastPosition.current.x;
-    velocity.current.y = clientY - lastPosition.current.y;
+    // Calculate delta from last frame
+    const deltaX = clientX - lastPosition.current.x;
+    const deltaY = clientY - lastPosition.current.y;
+    
+    // Detect abnormally large deltas that indicate a glitch or snap
+    const totalDelta = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    const suspiciouslyLargeThreshold = 500; // If delta is > 500px, likely a glitch
+    
+    if (totalDelta > suspiciouslyLargeThreshold) {
+      console.log(`Ignoring suspicious delta: ${totalDelta.toFixed(0)}px - likely a gesture glitch`);
+      // Reset last position to current to avoid accumulating the error
+      lastPosition.current = { x: clientX, y: clientY };
+      return; // Skip this frame
+    }
+
+    // Limit maximum delta per frame to prevent sudden jumps (e.g., from touch glitches)
+    const maxDeltaPerFrame = 200; // Maximum pixels per frame
+    const clampedDeltaX = Math.max(-maxDeltaPerFrame, Math.min(maxDeltaPerFrame, deltaX));
+    const clampedDeltaY = Math.max(-maxDeltaPerFrame, Math.min(maxDeltaPerFrame, deltaY));
+
+    // Update velocity for momentum (using clamped delta)
+    velocity.current.x = clampedDeltaX;
+    velocity.current.y = clampedDeltaY;
 
     lastPosition.current = { x: clientX, y: clientY };
 
-    // Update target position directly for 1:1 drag feel
-    const newX = clientX - dragStart.current.x;
-    const newY = clientY - dragStart.current.y;
+    // Update target position incrementally (not absolute positioning)
+    const newX = targetPosition.current.x + clampedDeltaX;
+    const newY = targetPosition.current.y + clampedDeltaY;
 
     targetPosition.current.x = Math.max(
       -maxDragDistance,
@@ -518,15 +536,20 @@ export default function PetNamesCanvas() {
     e.preventDefault();
 
     // Limit maximum scroll speed and apply smoothing multiplier
-    const maxDelta = 40;
+    const maxDelta = 50; // Increased slightly for better responsiveness
     const smoothing = 0.8;
+    
+    // Clamp the raw delta values to prevent sudden jumps from gesture snaps
+    const rawDeltaX = Math.max(-300, Math.min(300, e.deltaX));
+    const rawDeltaY = Math.max(-300, Math.min(300, e.deltaY));
+    
     const deltaX = Math.max(
       -maxDelta,
-      Math.min(maxDelta, e.deltaX * smoothing)
+      Math.min(maxDelta, rawDeltaX * smoothing)
     );
     const deltaY = Math.max(
       -maxDelta,
-      Math.min(maxDelta, e.deltaY * smoothing)
+      Math.min(maxDelta, rawDeltaY * smoothing)
     );
 
     // Update target position with scroll delta
