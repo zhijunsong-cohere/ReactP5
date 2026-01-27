@@ -6,12 +6,28 @@ import gsap from "gsap";
  */
 function Pumpkin({ id, startX, startY, targetX, targetY, peakY, onComplete }) {
   const pumpkinRef = useRef(null);
+  const onCompleteRef = useRef(onComplete);
+  const hasCompleted = useRef(false);
+
+  // Update ref when onComplete changes
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     if (!pumpkinRef.current) return;
 
     const tl = gsap.timeline({
-      onComplete: () => onComplete(id),
+      onComplete: () => {
+        // Ensure onComplete is only called once
+        if (hasCompleted.current) {
+          console.log(`Pumpkin ${id} onComplete already called, skipping`);
+          return;
+        }
+        hasCompleted.current = true;
+        console.log(`Pumpkin ${id} timeline complete - calling onComplete`);
+        onCompleteRef.current(id);
+      },
     });
 
     const duration = 1.8 + Math.random() * 0.4;
@@ -93,7 +109,7 @@ function Pumpkin({ id, startX, startY, targetX, targetY, peakY, onComplete }) {
     return () => {
       tl.kill();
     };
-  }, [startX, startY, targetX, targetY, peakY, id, onComplete]);
+  }, [startX, startY, targetX, targetY, peakY, id]);
 
   return (
     <div

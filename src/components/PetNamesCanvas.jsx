@@ -40,6 +40,8 @@ export default function PetNamesCanvas() {
   const gridVelocity = useRef({ x: 0, y: 0 }); // Track grid velocity for image momentum
   const [pumpkins, setPumpkins] = useState([]);
   const isPumpkinSpawning = useRef(false); // Global flag to prevent multiple spawns across all 23.png instances
+  const currentPumpkinBatch = useRef(null); // Track current batch ID
+  const pumpkinBatchCount = useRef(0); // Count pumpkins in current batch
 
   // Maple leaf stamp mode state
   const [isStampMode, setIsStampMode] = useState(false);
@@ -193,7 +195,7 @@ export default function PetNamesCanvas() {
 
       // Spawn 12 pumpkins throwing upward and falling
       const newPumpkins = [];
-      const pumpkinCount = 12;
+      const pumpkinCount = 10;
 
       for (let i = 0; i < pumpkinCount; i++) {
         // Random horizontal direction and distance
@@ -218,20 +220,33 @@ export default function PetNamesCanvas() {
         });
       }
 
-      console.log(`Adding ${newPumpkins.length} pumpkins to state`);
-      setPumpkins((prev) => [...prev, ...newPumpkins]);
+      // Track this batch
+      currentPumpkinBatch.current = batchId;
+      pumpkinBatchCount.current = pumpkinCount;
 
-      // Reset global flag after spawn completes (allow next spawn after 2s debounce)
-      setTimeout(() => {
-        isPumpkinSpawning.current = false;
-        console.log("Global spawn flag reset - ready for next spawn");
-      }, 100);
+      console.log(`Adding ${newPumpkins.length} pumpkins to state (batch: ${batchId})`);
+      setPumpkins((prev) => [...prev, ...newPumpkins]);
     }
   };
 
   // Remove completed pumpkins
   const removePumpkin = (id) => {
-    console.log(`Pumpkin ${id} completed animation`);
+    console.log(`Pumpkin ${id} completed animation - removing from state`);
+    
+    // Check if this pumpkin belongs to the current batch
+    const batchId = currentPumpkinBatch.current;
+    if (batchId && id.startsWith(batchId)) {
+      pumpkinBatchCount.current -= 1;
+      console.log(`Batch ${batchId}: ${pumpkinBatchCount.current} pumpkins remaining`);
+      
+      // If all pumpkins in the batch are done, reset the spawn flag
+      if (pumpkinBatchCount.current <= 0) {
+        isPumpkinSpawning.current = false;
+        currentPumpkinBatch.current = null;
+        console.log(`Batch ${batchId} complete - ready for next spawn`);
+      }
+    }
+    
     setPumpkins((prev) => prev.filter((p) => p.id !== id));
   };
 
@@ -568,6 +583,8 @@ export default function PetNamesCanvas() {
         clearTimeout(daisyStampModeTimer.current);
       }
       isPumpkinSpawning.current = false; // Reset global flag
+      currentPumpkinBatch.current = null;
+      pumpkinBatchCount.current = 0;
     };
   }, []);
 
